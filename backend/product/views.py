@@ -1,0 +1,47 @@
+from django.shortcuts import render
+from django.http import  JsonResponse
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from django.db.models import Q
+from .models import Product
+
+from .serializers import ProductSerializer
+# from .products import product
+
+from django.contrib.auth.models import User
+#from .serializers import *
+# Create your views here.
+
+@api_view(['GET'])
+def getProducts(request):
+    products = Product.objects.all()
+    serializer = ProductSerializer(products, many = True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def getProduct(request, q): 
+    products = Product.objects.filter(
+        Q(Product__name__icontains = q) |
+        Q(Product__category__icontains = q)
+     )
+    serializer = ProductSerializer(products, many = True)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+def addProduct(request):
+    serializer = ProductSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def getRetailerProducts(request,pk):
+    retailer = User.objects.get(name = pk)
+    products = Product.objects.filter(
+        Q(product__retailer__icontains = retailer)
+        )
+    serializer = ProductSerializer(products, many = False)
+    return Response(serializer.data)
+
