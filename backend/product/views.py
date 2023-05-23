@@ -22,8 +22,8 @@ def getProducts(request):
 @api_view(['GET'])
 def getProduct(request, q): 
     products = Product.objects.filter(
-        Q(Product__name__icontains = q) |
-        Q(Product__category__icontains = q)
+        Q(name__icontains = q) |
+        Q(category__icontains = q)
      )
     serializer = ProductSerializer(products, many = True)
     return Response(serializer.data)
@@ -37,11 +37,20 @@ def addProduct(request):
 
 
 @api_view(['GET'])
-def getRetailerProducts(request,pk):
-    retailer = User.objects.get(name = pk)
-    products = Product.objects.filter(
-        Q(product__retailer__icontains = retailer)
+def getRetailerProducts(request,q):
+    retailer = User.objects.get(username = q)
+    if retailer:
+        products = Product.objects.filter(
+        Q(retailer__icontains = retailer)
         )
-    serializer = ProductSerializer(products, many = False)
-    return Response(serializer.data)
-
+        serializer = ProductSerializer(products, many = False)
+        return Response(serializer.data)
+    
+    else: return Response("no match")
+    
+@api_view(['POST'])
+def deleteProduct(request,q):
+    product = Product.objects.get(name = q)
+    if request.method == 'POST':
+        product.delete()
+        return Response("product deleted")
