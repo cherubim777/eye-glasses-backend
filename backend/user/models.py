@@ -2,66 +2,38 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db.models.query import QuerySet
 from django.db.models.signals import post_save
+from django.contrib.auth.models import User
+
 # Create your models here.
 
-class User(AbstractUser):
-    class Role(models.TextChoices):
-        ADMIN = "ADMIN", 'Admin'
-        CUSTOMER = "CUSTOMER", 'Customer'
-        RETAILER = "RETAILER", 'Retailer'
-        
-    base_role = Role.ADMIN
-    
-    role = models.CharField(max_length=50, choices=Role.choices)
-    
-    def save(self, *args, **kwargs):
-        if not self.pk:
-            self.role = self.base_role
-            return super().save( *args, **kwargs)
-        
-class CustomerManager(BaseUserManager):
-    def get_queryset(self, *args, **kwargs):
-        results = super().get_queryset(self, *args, **kwargs)
-        return results.filter(role = User.Role.CUSTOMER)
-       
-    
-    
-class Customer(User):
-    base_role = User.Role.CUSTOMER
-    customer = CustomerManager()
-    
-    class Meta:
-        proxy = True
-    
-    def welcome(self):
-        return "only for customers"
-    
-    
-@@receiver(post_save, sender=Customer)
-def create_user_profile(sender, instace, created, **kwargs):
-    if created and instace.role == "CUSTOMER":
-        CustomerProfile.objects.create(user = instace )
-    
 
-    
-class CustomerProfile(models.Model):
+class Customer(models.Model):
+    user = models.OneToOneField(User, null=False, on_delete=models.CASCADE)
+    customer_id = models.AutoField(primary_key=True, editable=False)
+    first_name = models.CharField(max_length=200, null=False)
+    last_name = models.CharField(max_length=200, null=False)
+    phone_number = models.CharField(max_length=50)
+    email = models.EmailField()
+    photo = models.ImageField()
+    date_created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.first_name + self.last_name
+
+
+class Retailer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    Customer_id = models.AutoField()
-    
-    
-class RetailerManager(BaseUserManager):
-    def get_queryset(self, *args, **kwargs):
-        results = super().get_queryset(self, *args, **kwargs)
-        return results.filter(role = User.Role.RETAILER)
-       
-    
-    
-class Retailer(User):
-    base_role = User.Role.RETAILER
-    retailer = RetailerManager()
-    
-    class Meta:
-        proxy = True
-    
-    def welcome(self):
-        return "only for retailers"
+    retailer_id = models.AutoField(primary_key=True, editable=False)
+    first_name = models.CharField(max_length=200)
+    last_name = models.CharField(max_length=200)
+    email = models.EmailField()
+    phone_number = models.CharField(max_length=50)
+    accepts_custom_order = models.BooleanField()
+    store_name = models.CharField(max_length=200)
+    # store_id = models.AutoField(primary_key=True, editable=False)
+    rating = models.DecimalField(max_digits=7, decimal_places=2)
+    photo = models.ImageField()
+    date_created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.store_name
