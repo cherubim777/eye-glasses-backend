@@ -8,8 +8,9 @@ from django.contrib.auth.models import User
 
 
 class Customer(models.Model):
-    user = models.OneToOneField(User, null=False, on_delete=models.CASCADE)
-    customer_id = models.AutoField(primary_key=True, editable=False)
+    user = models.OneToOneField(
+        User, primary_key=True, null=False, on_delete=models.CASCADE
+    )
     first_name = models.CharField(max_length=200, null=False)
     last_name = models.CharField(max_length=200, null=False)
     phone_number = models.CharField(max_length=50)
@@ -17,28 +18,31 @@ class Customer(models.Model):
     local_address = models.CharField(max_length=30)
     subcity = models.CharField(max_length=30)
     city = models.CharField(max_length=30)
-    photo = models.ImageField()
+    photo = models.ImageField(null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.first_name + self.last_name
+        return self.first_name + " " + self.last_name
 
 
 class Retailer(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    retailer_id = models.AutoField(primary_key=True, editable=False)
+    user = models.OneToOneField(
+        User, primary_key=True, null=False, on_delete=models.CASCADE
+    )
+
     first_name = models.CharField(max_length=200)
     last_name = models.CharField(max_length=200)
+    phone_number = models.CharField(max_length=50)
     email = models.EmailField()
     local_address = models.CharField(max_length=30)
     subcity = models.CharField(max_length=30)
     city = models.CharField(max_length=30)
-    phone_number = models.CharField(max_length=50)
+    photo = models.ImageField()
     accepts_custom_order = models.BooleanField()
     store_name = models.CharField(max_length=200)
     # store_id = models.AutoField(primary_key=True, editable=False)
-    rating = models.DecimalField(max_digits=7, decimal_places=2)
-    photo = models.ImageField()
+    rating = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+
     date_created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
