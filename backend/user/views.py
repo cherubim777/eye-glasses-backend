@@ -8,11 +8,14 @@ from .serializers import UserSerializer
 from django.contrib.auth.hashers import make_password
 from rest_framework import status
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .models import *
 from .serializers import *
 from django.db import transaction
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.views import APIView
+from django.contrib.auth import logout
+from rest_framework_simplejwt.exceptions import TokenError
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -25,6 +28,31 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
+
+
+class Logout(APIView):
+    permission_classes = [IsAuthenticated]
+    renderer_classes = []
+
+    def post(self, request):
+        refresh_token = request.data.get("refresh_token")
+        access_token = request.data.get("access_token")
+
+        logout(request)
+
+        if refresh_token:
+            try:
+                TokenRefreshView().blacklist(refresh_token)
+            except TokenError as e:
+                return Response({"detail": str(e)}, status=400)
+
+        if access_token:
+            try:
+                TokenObtainPairView().blacklist(access_token)
+            except TokenError as e:
+                return Response({"detail": str(e)}, status=400)
+
+        return Response({"message": "User logged out successfully"})
 
 
 @api_view(["POST"])
@@ -121,6 +149,7 @@ def updateRetailer(request):
 
 
 @api_view(["GET"])
+@permission_classes([IsAdminUser])
 def getAllCustomers(request):
     customers = Customer.objects.select_related("user").all()
     serializer = CustomerSerializer(customers, many=True)
@@ -128,6 +157,7 @@ def getAllCustomers(request):
 
 
 @api_view(["GET"])
+@permission_classes([IsAdminUser])
 def getAllRetailers(request):
     retailers = Retailer.objects.select_related("user").all()
     serializer = RetailerSerializer(retailers, many=True)
@@ -135,7 +165,7 @@ def getAllRetailers(request):
 
 
 @api_view(["PUT"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAdminUser])
 def updateUser(request):
     user = request.user
     data = request.data
@@ -148,7 +178,7 @@ def updateUser(request):
 
 
 @api_view(["DELETE"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsAdminUser])
 def deleteAccount(request):
     user = request.user
     user.delete()
@@ -156,7 +186,7 @@ def deleteAccount(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsAdminUser])
 def getCustomerProfile(request):
     user = request.user
     try:
@@ -168,7 +198,7 @@ def getCustomerProfile(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsAdminUser])
 def getRetailerProfile(request):
     user = request.user
     try:
