@@ -4,17 +4,30 @@ from product.models import Product
 
 
 class WishList(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=255)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     date_created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username}'s Wishlist"
+
+    def get_items(self):
+        return WishlistItem.objects.filter(wishlist=self)
+
+    def add_item(self, product):
+        item, created = WishlistItem.objects.get_or_create(
+            wishlist=self, product=product)
+        return item
+
+    def remove_item(self, product):
+        WishlistItem.objects.filter(wishlist=self, product=product).delete()
 
 
 class WishListItem(models.Model):
-    wishlist = models.ForeignKey(WishList, on_delete=models.CASCADE)
-    Product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    # name = models.CharField(max_length=255)
-    # description = models.TextField()
-    # image = models.ImageField(
-    #     upload_to='wishlist/images', blank=True, null=True)
-    purchased = models.BooleanField(default=False)
+    wishlist = models.ForeignKey(
+        WishList, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
     added_date = models.DateTimeField(auto_now_add=True)
+    purchased = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.product} ({self.wishlist})"
