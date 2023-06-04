@@ -4,7 +4,9 @@ from django.test import TransactionTestCase
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from django.contrib.auth.models import User, Group
-from .serializers import UserSerializer
+
+
+from .serializers import UserSerializer, CustomerSerializer, RetailerSerializer
 from django.contrib.auth.hashers import make_password
 from rest_framework import status
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -16,6 +18,23 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from django.contrib.auth import logout
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework.permissions import BasePermission
+
+
+class IsCustomer(BasePermission):
+    def has_permission(self, request, view):
+        try:
+            return request.user.is_authenticated and request.user.customer is not None
+        except Customer.DoesNotExist:
+            return False
+
+
+class IsRetailer(BasePermission):
+    def has_permission(self, request, view):
+        try:
+            return request.user.is_authenticated and request.user.customer is not None
+        except Retailer.DoesNotExist:
+            return False
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
