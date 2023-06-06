@@ -12,6 +12,9 @@ class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = "__all__"
+        extra_kwargs = {
+            "photo": {"required": False},  # Make photo field optional
+        }
 
 
 class RetailerSerializer(serializers.ModelSerializer):

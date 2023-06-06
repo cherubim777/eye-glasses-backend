@@ -77,13 +77,14 @@ class Logout(APIView):
 @api_view(["POST"])
 def customerRegister(request):
     data = request.data
-    try:
-        with transaction.atomic():
-            group = Group.objects.get(name="customer")
-            user = User.objects.create(
-                username=data["username"],
-                password=make_password(data["password"]),
-            )
+    # try:
+    with transaction.atomic():
+        group = Group.objects.get(name="customer")
+        user = User.objects.create(
+            username=data["username"],
+            password=make_password(data["password"]),
+        )
+        if "photo" in data:
             customer = Customer.objects.create(
                 user=user,
                 first_name=data["first_name"],
@@ -95,17 +96,28 @@ def customerRegister(request):
                 city=data["city"],
                 photo=data["photo"],
             )
-            user.groups.add(group)
-            user_serializer = UserSerializer(user, many=False)
-            customer_serializer = CustomerSerializer(customer, many=False)
-            response_data = {
-                "user": user_serializer.data,
-                "customer": customer_serializer.data,
-            }
-            return Response(response_data)
-    except:
-        message = {"detail": "customer with this username already exists"}
-        return Response(message, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            customer = Customer.objects.create(
+                user=user,
+                first_name=data["first_name"],
+                last_name=data["last_name"],
+                phone_number=data["phone_number"],
+                email=data["email"],
+                local_address=data["local_address"],
+                subcity=data["subcity"],
+                city=data["city"],
+            )
+        user.groups.add(group)
+        user_serializer = UserSerializer(user, many=False)
+        customer_serializer = CustomerSerializer(customer, many=False)
+        response_data = {
+            "user": user_serializer.data,
+            "customer": customer_serializer.data,
+        }
+        return Response(response_data)
+    # except:
+    #     message = {"detail": "customer with this username already exists"}
+    #     return Response(message, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
@@ -118,18 +130,31 @@ def retailerRegister(request):
                 username=data["username"],
                 password=make_password(data["password"]),
             )
-            retailer = Retailer.objects.create(
-                user=user,
-                first_name=data["first_name"],
-                last_name=data["last_name"],
-                phone_number=data["phone_number"],
-                email=data["email"],
-                local_address=data["local_address"],
-                subcity=data["subcity"],
-                city=data["city"],
-                photo=data["photo"],
-                accepts_custom_order=data["accepts_custom_order"],
-            )
+            if "photo" in data:
+                retailer = Retailer.objects.create(
+                    user=user,
+                    first_name=data["first_name"],
+                    last_name=data["last_name"],
+                    phone_number=data["phone_number"],
+                    email=data["email"],
+                    local_address=data["local_address"],
+                    subcity=data["subcity"],
+                    city=data["city"],
+                    photo=data["photo"],
+                    accepts_custom_order=data["accepts_custom_order"],
+                )
+            else:
+                retailer = Retailer.objects.create(
+                    user=user,
+                    first_name=data["first_name"],
+                    last_name=data["last_name"],
+                    phone_number=data["phone_number"],
+                    email=data["email"],
+                    local_address=data["local_address"],
+                    subcity=data["subcity"],
+                    city=data["city"],
+                    accepts_custom_order=data["accepts_custom_order"],
+                )
             user.groups.add(group)
             user_serializer = UserSerializer(user, many=False)
             retailer_serializer = RetailerSerializer(retailer, many=False)
