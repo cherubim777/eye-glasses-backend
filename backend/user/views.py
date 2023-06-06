@@ -79,7 +79,6 @@ def customerRegister(request):
     data = request.data
     # try:
     with transaction.atomic():
-        group = Group.objects.get(name="customer")
         user = User.objects.create(
             username=data["username"],
             password=make_password(data["password"]),
@@ -107,7 +106,7 @@ def customerRegister(request):
                 subcity=data["subcity"],
                 city=data["city"],
             )
-        user.groups.add(group)
+
         user_serializer = UserSerializer(user, many=False)
         customer_serializer = CustomerSerializer(customer, many=False)
         response_data = {
@@ -125,7 +124,6 @@ def retailerRegister(request):
     data = request.data
     try:
         with transaction.atomic():
-            group = Group.objects.get(name="retailer")
             user = User.objects.create(
                 username=data["username"],
                 password=make_password(data["password"]),
@@ -155,7 +153,7 @@ def retailerRegister(request):
                     city=data["city"],
                     accepts_custom_order=data["accepts_custom_order"],
                 )
-            user.groups.add(group)
+
             user_serializer = UserSerializer(user, many=False)
             retailer_serializer = RetailerSerializer(retailer, many=False)
             response_data = {
