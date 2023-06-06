@@ -13,14 +13,7 @@ from rest_framework.views import APIView
 from .serializers import ProductSerializer, ReviewSerializer
 from django.contrib.auth.models import User
 from rest_framework.decorators import permission_classes
-
-
-class IsCustomer(BasePermission):
-    def has_permission(self, request, view):
-        try:
-            return request.user.is_authenticated and request.user.customer is not None
-        except Customer.DoesNotExist:
-            return False
+from user.views import IsCustomer
 
 
 @api_view(["GET"])
