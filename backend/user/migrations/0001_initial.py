@@ -17,7 +17,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Customer',
             fields=[
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to=settings.AUTH_USER_MODEL)),
+                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE,
+                 primary_key=True, serialize=False, to=settings.AUTH_USER_MODEL)),
                 ('first_name', models.CharField(max_length=200)),
                 ('last_name', models.CharField(max_length=200)),
                 ('phone_number', models.CharField(max_length=50)),
@@ -32,7 +33,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Retailer',
             fields=[
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to=settings.AUTH_USER_MODEL)),
+                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE,
+                 primary_key=True, serialize=False, to=settings.AUTH_USER_MODEL)),
                 ('first_name', models.CharField(max_length=200)),
                 ('last_name', models.CharField(max_length=200)),
                 ('phone_number', models.CharField(max_length=50)),
@@ -43,7 +45,8 @@ class Migration(migrations.Migration):
                 ('photo', models.ImageField(upload_to='')),
                 ('accepts_custom_order', models.BooleanField()),
                 ('store_name', models.CharField(max_length=200)),
-                ('rating', models.DecimalField(blank=True, decimal_places=2, max_digits=7, null=True)),
+                ('rating', models.DecimalField(blank=True,
+                 decimal_places=2, max_digits=7, null=True)),
                 ('date_created', models.DateTimeField(auto_now_add=True)),
             ],
         ),
