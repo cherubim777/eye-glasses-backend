@@ -14,6 +14,9 @@ from .serializers import ProductSerializer, ReviewSerializer
 from django.contrib.auth.models import User
 from rest_framework.decorators import permission_classes
 from user.views import IsCustomer
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+
 
 
 @api_view(["GET"])
@@ -34,6 +37,7 @@ def filterProducts(request, q):
     return Response(serializer.data)
 
 
+@method_decorator(login_required,name='dispatch')
 class AddProduct(APIView):
     permission_classes = [IsAuthenticated]
 

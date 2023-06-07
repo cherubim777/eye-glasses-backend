@@ -77,46 +77,47 @@ class Logout(APIView):
 @api_view(["POST"])
 def customerRegister(request):
     data = request.data
-    # try:
-    with transaction.atomic():
-        user = User.objects.create(
-            username=data["username"],
-            password=make_password(data["password"]),
-        )
-        if "photo" in data:
-            customer = Customer.objects.create(
-                user=user,
-                first_name=data["first_name"],
-                last_name=data["last_name"],
-                phone_number=data["phone_number"],
-                email=data["email"],
-                local_address=data["local_address"],
-                subcity=data["subcity"],
-                city=data["city"],
-                photo=data["photo"],
+    try:
+        with transaction.atomic():
+            
+            user = User.objects.create(
+                username=data["username"],
+                password=make_password(data["password"]),
             )
-        else:
-            customer = Customer.objects.create(
-                user=user,
-                first_name=data["first_name"],
-                last_name=data["last_name"],
-                phone_number=data["phone_number"],
-                email=data["email"],
-                local_address=data["local_address"],
-                subcity=data["subcity"],
-                city=data["city"],
-            )
-
-        user_serializer = UserSerializer(user, many=False)
-        customer_serializer = CustomerSerializer(customer, many=False)
-        response_data = {
-            "user": user_serializer.data,
-            "customer": customer_serializer.data,
-        }
-        return Response(response_data)
-    # except:
-    #     message = {"detail": "customer with this username already exists"}
-    #     return Response(message, status=status.HTTP_400_BAD_REQUEST)
+            if "photo" in data:
+                customer = Customer.objects.create(
+                    user=user,
+                    first_name=data["first_name"],
+                    last_name=data["last_name"],
+                    phone_number=data["phone_number"],
+                    email=data["email"],
+                    local_address=data["local_address"],
+                    subcity=data["subcity"],
+                    city=data["city"],
+                    photo=data["photo"],
+                )
+            else:
+                customer = Customer.objects.create(
+                    user=user,
+                    first_name=data["first_name"],
+                    last_name=data["last_name"],
+                    phone_number=data["phone_number"],
+                    email=data["email"],
+                    local_address=data["local_address"],
+                    subcity=data["subcity"],
+                    city=data["city"],
+                )
+            
+            user_serializer = UserSerializer(user, many=False)
+            customer_serializer = CustomerSerializer(customer, many=False)
+            response_data = {
+                "user": user_serializer.data,
+                "customer": customer_serializer.data,
+            }
+            return Response(response_data)
+    except:
+        message = {"detail": "customer with this username already exists"}
+        return Response(message, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
@@ -124,6 +125,7 @@ def retailerRegister(request):
     data = request.data
     try:
         with transaction.atomic():
+            
             user = User.objects.create(
                 username=data["username"],
                 password=make_password(data["password"]),
@@ -139,6 +141,7 @@ def retailerRegister(request):
                     subcity=data["subcity"],
                     city=data["city"],
                     photo=data["photo"],
+                    store_name=data["store_name"],
                     accepts_custom_order=data["accepts_custom_order"],
                 )
             else:
@@ -149,11 +152,12 @@ def retailerRegister(request):
                     phone_number=data["phone_number"],
                     email=data["email"],
                     local_address=data["local_address"],
+                    store_name=data["store_name"],
                     subcity=data["subcity"],
                     city=data["city"],
                     accepts_custom_order=data["accepts_custom_order"],
                 )
-
+            
             user_serializer = UserSerializer(user, many=False)
             retailer_serializer = RetailerSerializer(retailer, many=False)
             response_data = {
