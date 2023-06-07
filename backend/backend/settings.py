@@ -45,7 +45,6 @@ INSTALLED_APPS = [
     'wishlist.apps.WishlistConfig',
     'order.apps.OrderConfig',
     "corsheaders",
-    "order.apps.OrderConfig",
 ]
 
 
