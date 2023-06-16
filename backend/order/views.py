@@ -38,6 +38,14 @@ def placeOrder(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    try:
+        account = user.customer.account
+    except Customer.DoesNotExist:
+        return Response(
+            {"error": "This user is not associated with a customer account"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     # Get the retailer associated with the product
     try:
         product = Product.objects.get(id=product_id)
@@ -50,8 +58,18 @@ def placeOrder(request):
 
     # Calculate the total price of the order
     item_price = product.price
-    shipping_price = Decimal("5.00")  # assuming flat shipping rate of 5.00 birr
-    total_price = item_price + shipping_price
+    shipping_price = Decimal("100.00")  # assuming flat shipping rate of 5.00 birr
+    total_price = item_price * Decimal(quantity) + shipping_price
+
+    # Check if the customer has enough balance to place the order
+    if account.balance < total_price:
+        return Response(
+            {"error": "Insufficient balance"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Decrease the customer's balance and increase the reserved balance
+    account.decrease_balance(total_price)
 
     # Create a new order
     order = Order.objects.create(
@@ -76,119 +94,12 @@ def placeOrder(request):
         order=order,
         address=shipping_address.get("address"),
         city=shipping_address.get("city"),
-        postalCode=shipping_address.get("postalCode"),
-        country=shipping_address.get("country"),
         shippingPrice=shipping_price,
     )
 
     # Serialize the order and return it in the response
     serializer = OrderSerializer(order)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
-@api_view(["GET"])
-@permission_classes([IsAuthenticated, IsAdminUser])
-def getRetailerOrder(request, pk):
-    # Retrieve the authenticated user
-    user = request.user
-
-    # Get the retailer associated with the provided retailer_id
-    try:
-        retailer = Retailer.objects.get(id=pk)
-    except Retailer.DoesNotExist:
-        return Response(
-            {"error": f"Retailer with id {pk} does not exist"},
-            status=status.HTTP_404_NOT_FOUND,
-        )
-
-    # Check that the authenticated user is associated with the retailer
-    if user.retailer != retailer:
-        return Response(
-            {"error": "You are not authorized to view orders for this retailer"},
-            status=status.HTTP_401_UNAUTHORIZED,
-        )
-
-    # Get all orders associated with the retailer
-    orders = Order.objects.filter(retailer=retailer)
-
-    # Serialize the orders and return them in the response
-    serializer = OrderSerializer(orders, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-@api_view(["POST"])
-@permission_classes([IsCustomer, IsAdminUser])
-def placeCartOrder(request):
-    cart = get_object_or_404(Cart, user=request.user)
-
-    # Group cart items by retailer
-    cart_items_by_retailer = {}
-    for cart_item in cart.items.all():
-        retailer = cart_item.product.retailer
-        if retailer not in cart_items_by_retailer:
-            cart_items_by_retailer[retailer] = []
-        cart_items_by_retailer[retailer].append(cart_item)
-
-    # Create an order for each retailer and calculate the total price for each order
-    orders = []
-    for retailer, cart_items in cart_items_by_retailer.items():
-        # Create a new order
-        order = Order.objects.create(
-            customer=request.user.customer,
-            retailer=retailer,
-            paymentMethod=request.POST.get("paymentMethod"),
-            shippingPrice=None,
-            totalPrice=None,
-        )
-
-        # Add order items to the order and calculate the total price for the order
-        total_price = Decimal("0.00")
-        for cart_item in cart_items:
-            order_item = OrderItem.objects.create(
-                product=cart_item.product,
-                order=order,
-                name=cart_item.product.name,
-                qty=cart_item.quantity,
-                price=cart_item.product.price,
-            )
-            total_price += cart_item.product.price * cart_item.quantity
-
-        # Calculate the total price including tax and shipping for the order
-
-        shipping_price = Decimal("0.00")  # TODO: calculate shipping price for the order
-        commission_price = Decimal("0.00")
-        commission_rate = Decimal("0.02")  # 2% commission rate
-        commission_price = total_price * commission_rate
-        total_price += shipping_price + commission_price
-
-        # Update the order with the total price, tax price, shipping price, and commission price
-
-        order.shippingPrice = shipping_price
-        order.commissionPrice = commission_price
-        order.totalPrice = total_price
-        order.save()
-
-        # Create a new shipping address for the order
-        shipping_address = ShippingAddress.objects.create(
-            order=order,
-            address=request.POST.get("address"),
-            city=request.POST.get("city"),
-            postalCode=request.POST.get("postalCode"),
-            country=request.POST.get("country"),
-            shippingPrice=shipping_price,
-        )
-
-        # Add the order to the list of orders
-        orders.append(order)
-
-    # Clear the items in the cart
-    cart.items.clear()
-
-    # Serialize the list of orders
-    serializer = OrderSerializer(orders, many=True)
-
-    # Return a response with the serialized data
-    return Response(serializer.data)
 
 
 @api_view(["POST"])
