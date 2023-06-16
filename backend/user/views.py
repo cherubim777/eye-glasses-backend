@@ -32,7 +32,7 @@ class IsCustomer(BasePermission):
 class IsRetailer(BasePermission):
     def has_permission(self, request, view):
         try:
-            return request.user.is_authenticated and request.user.customer is not None
+            return request.user.is_authenticated and request.user.retailer is not None
         except Retailer.DoesNotExist:
             return False
 
@@ -77,59 +77,15 @@ class Logout(APIView):
 @api_view(["POST"])
 def customerRegister(request):
     data = request.data
-    # try:
-    with transaction.atomic():
-        user = User.objects.create(
-            username=data["username"],
-            password=make_password(data["password"]),
-        )
-        if "photo" in data:
-            customer = Customer.objects.create(
-                user=user,
-                first_name=data["first_name"],
-                last_name=data["last_name"],
-                phone_number=data["phone_number"],
-                email=data["email"],
-                local_address=data["local_address"],
-                subcity=data["subcity"],
-                city=data["city"],
-                photo=data["photo"],
-            )
-        else:
-            customer = Customer.objects.create(
-                user=user,
-                first_name=data["first_name"],
-                last_name=data["last_name"],
-                phone_number=data["phone_number"],
-                email=data["email"],
-                local_address=data["local_address"],
-                subcity=data["subcity"],
-                city=data["city"],
-            )
-
-        user_serializer = UserSerializer(user, many=False)
-        customer_serializer = CustomerSerializer(customer, many=False)
-        response_data = {
-            "user": user_serializer.data,
-            "customer": customer_serializer.data,
-        }
-        return Response(response_data)
-    # except:
-    #     message = {"detail": "customer with this username already exists"}
-    #     return Response(message, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(["POST"])
-def retailerRegister(request):
-    data = request.data
     try:
         with transaction.atomic():
             user = User.objects.create(
                 username=data["username"],
                 password=make_password(data["password"]),
+                email=data["email"],
             )
             if "photo" in data:
-                retailer = Retailer.objects.create(
+                customer = Customer.objects.create(
                     user=user,
                     first_name=data["first_name"],
                     last_name=data["last_name"],
@@ -139,10 +95,9 @@ def retailerRegister(request):
                     subcity=data["subcity"],
                     city=data["city"],
                     photo=data["photo"],
-                    accepts_custom_order=data["accepts_custom_order"],
                 )
             else:
-                retailer = Retailer.objects.create(
+                customer = Customer.objects.create(
                     user=user,
                     first_name=data["first_name"],
                     last_name=data["last_name"],
@@ -151,19 +106,68 @@ def retailerRegister(request):
                     local_address=data["local_address"],
                     subcity=data["subcity"],
                     city=data["city"],
-                    accepts_custom_order=data["accepts_custom_order"],
                 )
 
             user_serializer = UserSerializer(user, many=False)
-            retailer_serializer = RetailerSerializer(retailer, many=False)
+            customer_serializer = CustomerSerializer(customer, many=False)
             response_data = {
                 "user": user_serializer.data,
-                "retailer": retailer_serializer.data,
+                "customer": customer_serializer.data,
             }
             return Response(response_data)
     except:
-        message = {"detail": "retailer with this username already exists"}
+        message = {"detail": "customer with this username already exists"}
         return Response(message, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+def retailerRegister(request):
+    data = request.data
+    # try:
+    with transaction.atomic():
+        user = User.objects.create(
+            username=data["username"],
+            password=make_password(data["password"]),
+            email=data["email"],
+        )
+        if "photo" in data:
+            retailer = Retailer.objects.create(
+                user=user,
+                first_name=data["first_name"],
+                last_name=data["last_name"],
+                phone_number=data["phone_number"],
+                email=data["email"],
+                local_address=data["local_address"],
+                subcity=data["subcity"],
+                city=data["city"],
+                photo=data["photo"],
+                accepts_custom_order=data["accepts_custom_order"],
+                store_name=data["store_name"],
+            )
+        else:
+            retailer = Retailer.objects.create(
+                user=user,
+                first_name=data["first_name"],
+                last_name=data["last_name"],
+                phone_number=data["phone_number"],
+                email=data["email"],
+                local_address=data["local_address"],
+                subcity=data["subcity"],
+                city=data["city"],
+                accepts_custom_order=data["accepts_custom_order"],
+                store_name=data["store_name"],
+            )
+
+        user_serializer = UserSerializer(user, many=False)
+        retailer_serializer = RetailerSerializer(retailer, many=False)
+        response_data = {
+            "user": user_serializer.data,
+            "retailer": retailer_serializer.data,
+        }
+        return Response(response_data)
+    # except:
+    #     message = {"detail": "retailer with this username already exists"}
+    #     return Response(message, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["PUT"])

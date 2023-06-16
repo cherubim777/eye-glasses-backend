@@ -6,7 +6,11 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = "__all__"
-        # ['retailer', 'name', 'image', 'brand', 'category', 'description', 'rating', 'numReviews', 'price', 'countInStock','createdAt' ]
+        read_only_fields = ("retailer",)
+
+    def create(self, validated_data):
+        validated_data["retailer"] = self.context["request"].user.retailer
+        return super().create(validated_data)
 
 
 class ProductItemSerializer(serializers.ModelSerializer):

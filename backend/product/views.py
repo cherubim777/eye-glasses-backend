@@ -4,8 +4,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q
-
-from user.models import Customer
+from rest_framework.exceptions import AuthenticationFailed
+from user.models import Retailer, Customer
 from .models import Product, Review
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, BasePermission
 from rest_framework import generics, permissions
@@ -14,12 +14,24 @@ from .serializers import ProductSerializer, ReviewSerializer
 from django.contrib.auth.models import User
 from rest_framework.decorators import permission_classes
 from user.views import IsCustomer
+from user.views import IsRetailer
 
 
 @api_view(["GET"])
 def getProducts(request):
     products = Product.objects.all()
     serializer = ProductSerializer(products, many=True)
+    return Response(serializer.data)
+
+
+@api_view(["GET"])
+def getProduct(request, pk):
+    try:
+        product = Product.objects.get(pk=pk)
+    except Product.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    serializer = ProductSerializer(product)
     return Response(serializer.data)
 
 
@@ -38,40 +50,51 @@ class AddProduct(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        if not hasattr(request.user, "retailer"):
-            return Response(
-                {"error": "Only retailers can add products"},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-        serializer = ProductSerializer(data=request.data)
+        serializer = ProductSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
-            serializer.save(retailer=request.user.retailer)
+            try:
+                retailer = Retailer.objects.get(user=request.user)
+            except Retailer.DoesNotExist:
+                return Response(
+                    {"error": "Only retailers can add products"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            serializer.save(retailer=retailer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class GetRetailerProducts(generics.ListAPIView):
     serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Product.objects.filter(retailer=self.request.user.retailer)
+        retailer = Retailer.objects.get(user=self.request.user)
+        queryset = Product.objects.filter(retailer=retailer)
+        return queryset
 
 
-class DeleteProduct(generics.DestroyAPIView):
+class DeleteProduct(APIView):
     serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated, IsRetailer]
 
     def get_queryset(self):
         return Product.objects.filter(retailer=self.request.user.retailer)
 
-    def perform_destroy(self, instance):
+    def delete(self, request, pk):
+        try:
+            instance = self.get_queryset().get(pk=pk)
+        except Product.DoesNotExist:
+            return Response(
+                {"error": "Product not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
         instance.delete()
         return Response(
             {"success": "Product deleted successfully"},
-            status=status.HTTP_204_NO_CONTENT,
+            status=status.HTTP_200_OK,
+            content_type="application/json",
         )
 
 
@@ -89,16 +112,30 @@ class RelatedProduct(APIView):
 
 class UpdateProduct(APIView):
     def put(self, request, pk):
-        product = get_object_or_404(Product, pk=pk)
+        try:
+            product = Product.objects.get(pk=pk)
+        except Product.DoesNotExist:
+            return Response(
+                {"error": "Product not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        if product.retailer != request.user:
-            return Response(status=status.HTTP_403_FORBIDDEN)
+        if not request.user.is_authenticated or not hasattr(request.user, "retailer"):
+            return Response(
+                {"error": "Authentication failed"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        if product.retailer.user_id != request.user.id:
+            return Response(
+                {"error": "Unauthorized"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         serializer = ProductSerializer(product, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
-
             return Response(serializer.data)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
