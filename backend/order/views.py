@@ -56,10 +56,27 @@ def placeOrder(request):
             status=status.HTTP_404_NOT_FOUND,
         )
 
+    # Check if the product has enough quantity to fulfill the order
+    if product.quantity < int(quantity):
+        return Response(
+            {"error": "Insufficient product quantity"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Decrease the product quantity by the ordered amount
+    if not product.decrease_quantity(amount=quantity):
+        # The product quantity is less than the ordered amount
+        return Response(
+            {"error": "Insufficient product quantity"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     # Calculate the total price of the order
     item_price = product.price
-    shipping_price = Decimal("100.00")  # assuming flat shipping rate of 5.00 birr
-    total_price = item_price * Decimal(quantity) + shipping_price
+    shipping_price = Decimal("100.00")
+    # assuming flat shipping rate of 100.00 birr
+    commission_rate = 0.02 * float(item_price)
+    total_price = item_price * Decimal(quantity) + shipping_price + commission_rate
 
     # Check if the customer has enough balance to place the order
     if account.balance < total_price:
@@ -70,6 +87,7 @@ def placeOrder(request):
 
     # Decrease the customer's balance and increase the reserved balance
     account.decrease_balance(total_price)
+    account.increase_reserved_balance(total_price)
 
     # Create a new order
     order = Order.objects.create(
@@ -139,8 +157,8 @@ def placeCustomOrder(request):
         )
 
     # Calculate the total price of the custom order
-    item_price = Decimal("50.00")  # assuming price per custom order is 50.00 birr
-    shipping_price = Decimal("10.00")  # assuming flat shipping rate of 10.00 birr
+    item_price = Decimal("500.00")  # assuming price per custom order is 500.00 birr
+    shipping_price = Decimal("100.00")  # assuming flat shipping rate of 100.00 birr
     commission_rate = Decimal("0.02")  # assuming commission rate of 2%
     commission_price = item_price * commission_rate
     total_price = item_price + shipping_price + commission_price
@@ -230,9 +248,7 @@ def getRetailerNotCustomrOrders(request):
         )
 
     # Retrieve the retailer's orders (that are not custom orders)
-    orders = Order.objects.filter(retailer=retailer, customOrder=None).order_by(
-        "-createdAt"
-    )
+    orders = Order.objects.filter(retailer=retailer).order_by("-createdAt").reverse()
 
     # Serialize the orders and return them in the response
     serializer = OrderSerializer(orders, many=True)

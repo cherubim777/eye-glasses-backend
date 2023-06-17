@@ -44,7 +44,8 @@ class Account(models.Model):
             raise ValueError("Insufficient reserved balance")
         self.reserved_balance -= amount
         self.total_reserved_balance -= amount
-        retailer_account.increase_balance(amount)
+        retailer_account.increase_balance(amount - amount * 0.02)
+        AdminAccount.increase_balance(amount * 0.02)
         self.save()
         retailer_account.save()
 
@@ -54,3 +55,17 @@ class Account(models.Model):
             customer=customer, retailer=retailer, balance=initial_balance
         )
         return account
+
+
+class AdminAccount(models.Model):
+    admin = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="admin_account"
+    )
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    def __str__(self):
+        return AdminAccount
+
+    def increase_balance(self, amount):
+        self.balance += amount
+        self.save()

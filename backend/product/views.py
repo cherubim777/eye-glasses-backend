@@ -19,7 +19,7 @@ from user.views import IsRetailer
 
 @api_view(["GET"])
 def getProducts(request):
-    products = Product.objects.all()
+    products = Product.objects.filter(quantity__gt=0)
     serializer = ProductSerializer(products, many=True)
     return Response(serializer.data)
 

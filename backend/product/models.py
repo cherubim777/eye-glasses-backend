@@ -23,6 +23,19 @@ class Category(models.Model):
 
 
 class Product(models.Model):
+    CATEGORY_CHOICES = [
+        ("Aviator", "Aviator"),
+        ("Wayfarer", "Wayfarer"),
+        ("Round", "Round"),
+        ("Cat Eye", "Cat Eye"),
+        ("Sports", "Sports"),
+        ("Oversized", "Oversized"),
+        ("Mirrored", "Mirrored"),
+        ("Polarized", "Polarized"),
+        ("Gradient", "Gradient"),
+        ("Clip-On", "Clip-On"),
+    ]
+
     GENDER_CHOICES = [
         ("M", "Male"),
         ("F", "Female"),
@@ -42,16 +55,26 @@ class Product(models.Model):
     gender_category = models.CharField(
         max_length=1, choices=GENDER_CHOICES, default="U"
     )
-    # category = models.ForeignKey(
-    #     Category, null=True, blank=True, on_delete=models.SET_NULL
-    # )
+    category = models.CharField(
+        max_length=20, choices=CATEGORY_CHOICES, null=True, blank=True
+    )
     brand = models.CharField(max_length=200, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     rating = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    quantity = models.IntegerField(default=0)
     numReviews = models.IntegerField(default=0)
     price = models.DecimalField(max_digits=7, decimal_places=2)
     createdAt = models.DateTimeField(auto_now_add=True)
     photo = models.ImageField(default="photo")
+
+    def decrease_quantity(self, amount=1):
+        amount = int(amount)
+        if self.quantity >= amount:
+            self.quantity -= amount
+            self.save()
+            return True
+        else:
+            return False
 
     def __str__(self):
         return self.name
