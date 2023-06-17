@@ -115,7 +115,7 @@ def customerRegister(request):
         # this is only to simulate money transaction between customer and retailer
         account = Account.create(customer=customer, initial_balance=5000)
         # create cart for the customer
-        cart = Cart.create(customer=customer)
+        cart = Cart.create(user=user)
         user_serializer = UserSerializer(user, many=False)
         customer_serializer = CustomerSerializer(customer, many=False)
         account_serializer = AccountSerializer(account, many=False)
