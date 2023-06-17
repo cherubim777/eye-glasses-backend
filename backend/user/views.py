@@ -317,3 +317,26 @@ class GetRetailerProfile(generics.RetrieveAPIView):
             raise Http404
         self.check_object_permissions(self.request, retailer)
         return retailer
+
+
+# class GetCustomOrderRetailer(generics.RetrieveAPIView):
+#     serializer_class = RetailerSerializer
+#     # permission_classes = [IsAuthenticated, IsRetailer]
+
+#     def get_object(self):
+#         try:
+#             queryset = Retailer.objects.filter(accepts_custom_order=True)
+#             return queryset
+
+#         except Retailer.DoesNotExist:
+#             raise Http404
+#         return retailer
+
+
+class GetCustomOrderRetailer(generics.ListAPIView):
+    serializer_class = RetailerSerializer
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = Retailer.objects.filter(accepts_custom_order=True)
+        return queryset
