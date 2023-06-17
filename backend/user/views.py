@@ -147,8 +147,8 @@ def retailerRegister(request):
                     subcity=data["subcity"],
                     city=data["city"],
                     photo=data["photo"],
-                    accepts_custom_order=data["accepts_custom_order"],
                     store_name=data["store_name"],
+                    accepts_custom_order=data["accepts_custom_order"],
                 )
             else:
                 retailer = Retailer.objects.create(
@@ -158,10 +158,10 @@ def retailerRegister(request):
                     phone_number=data["phone_number"],
                     email=data["email"],
                     local_address=data["local_address"],
+                    store_name=data["store_name"],
                     subcity=data["subcity"],
                     city=data["city"],
                     accepts_custom_order=data["accepts_custom_order"],
-                    store_name=data["store_name"],
                 )
             # Create an account for the new retailer with an initial balance of 5000
             # this is only to simulate maoney transaction

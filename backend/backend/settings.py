@@ -42,10 +42,10 @@ INSTALLED_APPS = [
     "user.apps.UserConfig",
     "product.apps.ProductConfig",
     "cart.apps.CartConfig",
+    "order.apps.OrderConfig",
     "wishlist.apps.WishlistConfig",
     "payment.apps.PaymentConfig",
     "corsheaders",
-    "order.apps.OrderConfig",
 ]
 
 
