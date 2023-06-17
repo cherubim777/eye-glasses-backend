@@ -46,10 +46,11 @@
 from rest_framework import generics, permissions
 from .models import Cart, CartItem
 from .serializers import CartSerializer, CartItemSerializer
-
+from user.models import Customer
 
 # CartListCreateAPIView: handles HTTP GET and POST requests
 #  for listing all carts and creating new carts, respectively.
+
 
 class CartListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = CartSerializer
@@ -59,14 +60,14 @@ class CartListCreateAPIView(generics.ListCreateAPIView):
         return Cart.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        print(self.request.user, '------------')
+        print(self.request.user, "------------")
         serializer.save(user=self.request.user)
 
 
-'''
+"""
     CartRetrieveUpdateDestroyAPIView: handles HTTP GET, PUT, and DELETE requests 
     for retrieving, updating, and deleting a specific cart, respectively.
-'''
+"""
 
 
 class CartRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
@@ -77,9 +78,9 @@ class CartRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
         return Cart.objects.filter(user=self.request.user)
 
 
-'''
+"""
     CartItemCreateAPIView: handles HTTP POST requests for adding a new item to the cart.
-'''
+"""
 
 
 class CartItemCreateAPIView(generics.CreateAPIView):
@@ -87,14 +88,15 @@ class CartItemCreateAPIView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        cart = Cart.objects.get(user=self.request.user)
+        customer = Customer.objects.get(user=self.request.user)
+        cart = Cart.objects.get(customer=customer)
         serializer.save(cart=cart)
 
 
-'''
+"""
     CartItemRetrieveUpdateDestroyAPIView: handles HTTP GET, PUT, and DELETE requests 
     for retrieving, updating, and deleting a specific item in the cart, respectively.
-'''
+"""
 
 
 class CartItemRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):

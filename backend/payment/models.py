@@ -50,7 +50,6 @@ class Account(models.Model):
         admin_account.increase_balance(amount)
         self.save()
         retailer_account.save()
-        return {"message": "money transferred to retailer account"}
 
     @staticmethod
     def create(customer=None, retailer=None, initial_balance=0):

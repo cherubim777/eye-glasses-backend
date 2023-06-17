@@ -16,8 +16,7 @@ urlpatterns = [
         views.CustomOrderFulfilled,
         name="customOrderFulfilled",
     ),
-    # path("getRetailerOrder/<str:pk>", views.getRetailerOrder, name="getRetailerOrder"),
-    # path("placeCartOrder/", views.placeCartOrder, name="placeCartOrder"),
+    path("placeCartOrder/", views.placeCartOrder, name="placeCartOrder"),
     path(
         "getCustomerCustomOrders/",
         views.getCustomerCustomOrders,

@@ -100,6 +100,7 @@ def placeOrder(request):
         paymentMethod=payment_method,
         shippingPrice=shipping_price,
         totalPrice=total_price,
+        commissionPrice=commission_rate,
     )
 
     # Create a new order item
@@ -154,7 +155,7 @@ def placeCustomOrder(request):
 
     # Get the retailer for the custom order
     try:
-        retailer = Retailer.objects.get(pk=retailer_id)
+        retailer = Retailer.objects.get(user=retailer_id)
     except Retailer.DoesNotExist:
         return Response(
             {"error": f"Retailer with id {retailer_id} does not exist"},
@@ -362,3 +363,123 @@ def CustomOrderFulfilled(request, order_id):
         order.save()
 
     return Response({"message": "money transferred to retailer account"})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated, IsCustomer])
+def placeCartOrder(request):
+    # Retrieve the necessary data from the request
+    shipping_address = request.data.get("shipping_address")
+    payment_method = request.data.get("payment_method")
+
+    # Retrieve the authenticated user
+    user = request.user
+
+    # Get the customer associated with the user
+    try:
+        customer = user.customer
+    except Customer.DoesNotExist:
+        return Response(
+            {"error": "This user is not associated with a customer account"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        account = user.customer.account
+    except Customer.DoesNotExist:
+        return Response(
+            {"error": "This user is not associated with a customer account"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Get the customer's cart
+    try:
+        cart = customer.cart
+    except Cart.DoesNotExist:
+        return Response(
+            {"error": "This customer does not have a cart"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Calculate the shipping price and commission rate
+    shipping_price = Decimal("100.00")
+    commission_rate = Decimal("0.02")
+
+    # Iterate through each item in the cart and create a new order for each item
+    orders = []
+    for cart_item in cart.items.all():
+        # Get the product associated with the cart item
+        product = cart_item.product
+        retailer = product.retailer
+
+        # Check if the product has enough quantity to fulfill the order
+        if product.quantity < cart_item.quantity:
+            return Response(
+                {"error": f"Insufficient product quantity for {product.name}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Decrease the product quantity by the ordered amount
+        if not product.decrease_quantity(amount=cart_item.quantity):
+            # The product quantity is less than the ordered amount
+            return Response(
+                {"error": f"Insufficient product quantity for {product.name}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Calculate the total price for the order item
+        item_price = product.price
+        commission_amount = commission_rate * item_price * Decimal(cart_item.quantity)
+        total_price = (
+            item_price * Decimal(cart_item.quantity)
+            + shipping_price
+            + commission_amount
+        )
+
+        # Check if the customer has enough balance to place the order
+        if account.balance < total_price:
+            return Response(
+                {"error": "Insufficient balance"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Decrease the customer's balance and increase the reserved balance
+        account.decrease_balance(total_price)
+        account.reserved_balance += total_price
+
+        # Create a new order
+        order = Order.objects.create(
+            customer=customer,
+            retailer=retailer,
+            paymentMethod=payment_method,
+            shippingPrice=shipping_price,
+            totalPrice=total_price,
+            commissionPrice=commission_amount,
+        )
+
+        # Create a new order item
+        OrderItem.objects.create(
+            product=product,
+            order=order,
+            name=product.name,
+            qty=cart_item.quantity,
+            price=item_price,
+        )
+
+        # Create a new shipping address
+        ShippingAddress.objects.create(
+            order=order,
+            address=shipping_address.get("address"),
+            city=shipping_address.get("city"),
+            shippingPrice=shipping_price,
+        )
+
+        # Add the order to the list of orders
+        orders.append(order)
+
+    # Clear the customer's cart
+    cart.items.clear()
+
+    # Serialize the orders and return them in the response
+    serializer = OrderSerializer(orders, many=True)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)

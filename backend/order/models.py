@@ -11,7 +11,11 @@ class Order(models.Model):
     paymentMethod = models.CharField(max_length=200)
 
     shippingPrice = models.DecimalField(max_digits=7, decimal_places=2)
+    commissionRate = models.CharField(default="2%", max_length=5)
+    commissionPrice = models.DecimalField(max_digits=7, decimal_places=2)
+
     totalPrice = models.DecimalField(max_digits=7, decimal_places=2)
+
     isPaid = models.BooleanField(default=True)
     paidAt = models.DateTimeField(auto_now_add=False, null=True, blank=True)
     isDelivered = models.BooleanField(default=False)
