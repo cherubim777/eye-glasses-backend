@@ -1,4 +1,5 @@
 from datetime import timezone
+import datetime
 from decimal import Decimal
 from django.shortcuts import get_object_or_404, render
 from rest_framework.decorators import api_view
@@ -15,6 +16,7 @@ from user.models import *
 from product.models import *
 from user.views import IsCustomer, IsRetailer
 from cart.models import Cart
+from payment.models import Account, AdminAccount
 
 
 @api_view(["POST"])
@@ -76,7 +78,9 @@ def placeOrder(request):
     shipping_price = Decimal("100.00")
     # assuming flat shipping rate of 100.00 birr
     commission_rate = 0.02 * float(item_price)
-    total_price = item_price * Decimal(quantity) + shipping_price + commission_rate
+    total_price = (
+        item_price * Decimal(quantity) + shipping_price + Decimal(commission_rate)
+    )
 
     # Check if the customer has enough balance to place the order
     if account.balance < total_price:
@@ -87,7 +91,7 @@ def placeOrder(request):
 
     # Decrease the customer's balance and increase the reserved balance
     account.decrease_balance(total_price)
-    account.increase_reserved_balance(total_price)
+    account.reserved_balance += total_price
 
     # Create a new order
     order = Order.objects.create(
@@ -124,7 +128,7 @@ def placeOrder(request):
 @permission_classes([IsAuthenticated, IsCustomer])
 def placeCustomOrder(request):
     # Retrieve the necessary data from the request
-    retailer_id = request.data.get("retailer_id")
+    retailer_id = request.data.get("retailer")
     right_sphere = request.data.get("right_sphere")
     left_sphere = request.data.get("left_sphere")
     right_cylinder = request.data.get("right_cylinder")
@@ -146,10 +150,11 @@ def placeCustomOrder(request):
             {"error": "This user is not associated with a customer account"},
             status=status.HTTP_400_BAD_REQUEST,
         )
+    account = customer.account
 
     # Get the retailer for the custom order
     try:
-        retailer = Retailer.objects.get(id=retailer_id)
+        retailer = Retailer.objects.get(pk=retailer_id)
     except Retailer.DoesNotExist:
         return Response(
             {"error": f"Retailer with id {retailer_id} does not exist"},
@@ -162,6 +167,17 @@ def placeCustomOrder(request):
     commission_rate = Decimal("0.02")  # assuming commission rate of 2%
     commission_price = item_price * commission_rate
     total_price = item_price + shipping_price + commission_price
+
+    # Check if the customer has enough balance to place the order
+    if account.balance < total_price:
+        return Response(
+            {"error": "Insufficient balance"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Decrease the customer's balance and increase the reserved balance
+    account.decrease_balance(total_price)
+    account.reserved_balance += total_price
 
     # Create a new custom order
     custom_order = CustomOrder.objects.create(
@@ -187,29 +203,6 @@ def placeCustomOrder(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsCustomer])
-def getCustomerCustomOrders(request):
-    # Retrieve the authenticated user
-    user = request.user
-
-    # Get the customer associated with the user
-    try:
-        customer = user.customer
-    except Customer.DoesNotExist:
-        return Response(
-            {"error": "This user is not associated with a customer account"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    # Retrieve the customer's custom orders
-    custom_orders = CustomOrder.objects.filter(customer=customer).order_by("-createdAt")
-
-    # Serialize the custom orders and return them in the response
-    serializer = CustomOrderSerializer(custom_orders, many=True)
-    return Response(serializer.data)
-
-
-@api_view(["GET"])
 @permission_classes([IsAuthenticated, IsRetailer])
 def getRetailerCustomOrders(request):
     # Retrieve the authenticated user
@@ -225,7 +218,34 @@ def getRetailerCustomOrders(request):
         )
 
     # Retrieve the retailer's custom orders
-    custom_orders = CustomOrder.objects.filter(retailer=retailer).order_by("-createdAt")
+    custom_orders = (
+        CustomOrder.objects.filter(retailer=retailer).order_by("-createdAt").reverse()
+    )
+
+    # Serialize the custom orders and return them in the response
+    serializer = CustomOrderSerializer(custom_orders, many=True)
+    return Response(serializer.data)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsCustomer])
+def getCustomerCustomOrders(request):
+    # Retrieve the authenticated user
+    user = request.user
+
+    # Get the retailer associated with the user
+    try:
+        customer = user.customer
+    except customer.DoesNotExist:
+        return Response(
+            {"error": "This user is not associated with a retailer account"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Retrieve the retailer's custom orders
+    custom_orders = (
+        CustomOrder.objects.filter(customer=customer).order_by("-createdAt").reverse()
+    )
 
     # Serialize the custom orders and return them in the response
     serializer = CustomOrderSerializer(custom_orders, many=True)
@@ -234,7 +254,7 @@ def getRetailerCustomOrders(request):
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsRetailer])
-def getRetailerNotCustomrOrders(request):
+def getRetailerOrders(request):
     # Retrieve the authenticated user
     user = request.user
 
@@ -257,7 +277,7 @@ def getRetailerNotCustomrOrders(request):
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsCustomer])
-def getCustomerNotCustomOrders(request):
+def getCustomerOrders(request):
     # Retrieve the authenticated user
     user = request.user
 
@@ -271,12 +291,10 @@ def getCustomerNotCustomOrders(request):
         )
 
     # Retrieve the customer's orders (that are not custom orders)
-    orders = Order.objects.filter(customer=customer, customOrder=None).order_by(
-        "-createdAt"
-    )
+    orders = Order.objects.filter(customer=customer).order_by("-createdAt").reverse()
 
     # Serialize the orders and return them in the response
-    serializer = OrderSerializer(orders, many=True)
+    serializer = OrderSerializer(orders, many=True, context={"request": request})
     return Response(serializer.data)
 
 
@@ -308,7 +326,7 @@ def markCustomOrderAsReady(request, custom_order_id):
 
     # Update the custom order fields
     custom_order.isReady = True
-    custom_order.readyAt = timezone.now()
+    custom_order.readyAt = datetime.datetime.now()
     custom_order.save()
 
     # Serialize the custom order and return it in the response
@@ -318,16 +336,29 @@ def markCustomOrderAsReady(request, custom_order_id):
 
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated, IsCustomer])
-def updateIsDelivered(request, order_id):
-    try:
-        # Retrieve the order instance by ID and check if it belongs to the authenticated user
-        order = Order.objects.get(id=order_id, customer=request.user.customer)
-    except Order.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+def orderFulfilled(request, order_id):
+    order = Order.objects.get(id=order_id)
+    if not order.isDelivered:
+        retailer_account = order.retailer.account
+        customer_account = order.customer.account
+        customer_account.fulfill_order(order.totalPrice, retailer_account)
+        order.isDelivered = True
+        order.deliveredAt = datetime.datetime.now()
+        order.save()
 
-    # Set the is_delivered flag to True and save the order instance
-    order.is_delivered = True
-    order.save()
+    return Response({"message": "money transferred to retailer account"})
 
-    # Return a success response
-    return Response(status=status.HTTP_200_OK)
+
+@api_view(["PUT"])
+@permission_classes([IsAuthenticated, IsCustomer])
+def CustomOrderFulfilled(request, order_id):
+    order = CustomOrder.objects.get(id=order_id)
+    if not order.isDelivered:
+        retailer_account = order.retailer.account
+        customer_account = order.customer.account
+        customer_account.fulfill_order(order.totalPrice, retailer_account)
+        order.isDelivered = True
+        order.deliveredAt = datetime.datetime.now()
+        order.save()
+
+    return Response({"message": "money transferred to retailer account"})

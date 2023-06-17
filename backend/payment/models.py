@@ -1,6 +1,8 @@
+from decimal import Decimal
 from django.db import models
 from django.contrib.auth.models import User
 from user.models import Customer, Retailer
+from rest_framework.response import Response
 
 
 # the following account model is written to simulate money transaction between customer and retailer
@@ -12,9 +14,7 @@ class Account(models.Model):
         Retailer, on_delete=models.CASCADE, null=True, blank=True
     )
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    reserved_balance = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0, editable=False
-    )
+    reserved_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_reserved_balance = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, editable=False
     )
@@ -44,10 +44,13 @@ class Account(models.Model):
             raise ValueError("Insufficient reserved balance")
         self.reserved_balance -= amount
         self.total_reserved_balance -= amount
-        retailer_account.increase_balance(amount - amount * 0.02)
-        AdminAccount.increase_balance(amount * 0.02)
+        retailer_account.increase_balance(amount - amount * Decimal(0.02))
+        amount = amount * Decimal(0.02)
+        admin_account = AdminAccount.objects.first()
+        admin_account.increase_balance(amount)
         self.save()
         retailer_account.save()
+        return {"message": "money transferred to retailer account"}
 
     @staticmethod
     def create(customer=None, retailer=None, initial_balance=0):
@@ -58,13 +61,12 @@ class Account(models.Model):
 
 
 class AdminAccount(models.Model):
-    # admin = models.OneToOneField(
-    #     Admin, on_delete=models.CASCADE, related_name="admin_account"
-    # )
+    _id = 1
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
 
     def __str__(self):
-        return AdminAccount
+        return "AdminAccount"
 
     def increase_balance(self, amount):
         self.balance += amount

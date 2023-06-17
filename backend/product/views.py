@@ -41,6 +41,7 @@ def filterProducts(request, q):
         Q(name__icontains=q)
         | Q(gender_category__icontains=q)
         | Q(age_group__icontains=q)
+        | Q(category__icontains=q)
     )
     serializer = ProductSerializer(products, many=True)
     return Response(serializer.data)
