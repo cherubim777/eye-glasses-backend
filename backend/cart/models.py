@@ -1,28 +1,32 @@
 from django.db import models
 from django.contrib.auth.models import User
 from product.models import Product
-from user.models import Customer
-
-
-class CartItem(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField(default=1)
-    date_added = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.product.name
+# from user.models import Customer
 
 
 class Cart(models.Model):
-    customer = models.OneToOneField(Customer, on_delete=models.CASCADE)
-    items = models.ManyToManyField(CartItem, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    @staticmethod
-    def create(customer=None):
-        cart = Cart.objects.create(customer=customer)
-        return cart
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=("created at"))
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=("updated at"))
 
     def __str__(self):
-        return f"Cart for {self.customer.first_name} {self.customer.last_name}"
+        return f"{self.user}'s Cart ({self.pk})"
+
+    @staticmethod
+    def create(user=None):
+        cart = Cart.objects.create(user=user)
+        return cart
+
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(
+        Cart, on_delete=models.CASCADE, related_name="items")
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, verbose_name=("product"))
+    quantity = models.PositiveIntegerField(
+        default=1, verbose_name=("quantity"))
+
+    def __str__(self):
+        return f"{self.quantity} x {self.product.name} in {self.cart}"

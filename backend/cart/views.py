@@ -1,111 +1,88 @@
-# from rest_framework import permissions, status
-# from rest_framework.views import APIView
-# from rest_framework.response import Response
-# from .models import Cart, CartItem
-# from .serializers import CartSerializer, CartItemSerializer
-#
-#
-# class CartListView(APIView):
-#     permission_classes = [permissions.IsAuthenticated]
-#
-#     def get(self, request, format=None):
-#         carts = Cart.objects.all()
-#         serializer = CartSerializer(carts, many=True)
-#         return Response(serializer.data)
-#
-#
-# class CartDetailView(APIView):
-#     permission_classes = [permissions.IsAuthenticated]
-#
-#     def get(self, request, format=None, user_name=None):
-#         cart = Cart.objects.get(customer=request.user)
-#         serializer = CartSerializer(cart)
-#         return Response(serializer.data)
-#
-#     def post(self, request, format=None, user_name=None):
-#         serializer = CartSerializer(data=request.data)
-#         if serializer.is_valid():
-#             serializer.save(customer=request.user)
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#
-#     def put(self, request, format=None, user_name=None):
-#         cart = Cart.objects.get(customer=request.user)
-#         serializer = CartSerializer(cart, data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data)
-#         return Response(serializer.errors, status=400)
-#
-#     def delete(self, request, format=None, user_name=None):
-#         cart = Cart.objects.get(customer=request.user)
-#         cart.delete()
-#         return Response(status=204)
-#
-
-from rest_framework import generics, permissions
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import authentication, permissions
 from .models import Cart, CartItem
 from .serializers import CartSerializer, CartItemSerializer
 from user.models import Customer
 from rest_framework.response import Response
 
-# CartListCreateAPIView: handles HTTP GET and POST requests
-#  for listing all carts and creating new carts, respectively.
 
-
-class CartListCreateAPIView(generics.ListCreateAPIView):
-    serializer_class = CartSerializer
+class CartView(APIView):
+    # authentication_classes = [authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        return Cart.objects.filter(user=self.request.user)
+    def get(self, request):
+        cart = Cart.objects.get_or_create(user=request.user)[0]
+        serializer = CartSerializer(cart)
+        # another_serializer = CartSerializer(cart.cartitem_set.all())
+        return Response(serializer.data)
 
-    def perform_create(self, serializer):
-        print(self.request.user, "------------")
-        serializer.save(user=self.request.user)
-
-
-"""
-    CartRetrieveUpdateDestroyAPIView: handles HTTP GET, PUT, and DELETE requests 
-    for retrieving, updating, and deleting a specific cart, respectively.
-"""
-
-
-class CartRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = CartSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        customer = Customer.objects.get(user=self.request.user)
-        cart = Cart.objects.get(customer=customer)
-        cart_serializer = CartSerializer(cart, many=False)
+    def post(self, request):
+        cart = Cart.objects.get_or_create(user=request.user)[0]
+        serializer = CartItemSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        product = serializer.validated_data['product']
+        quantity = 1  # serializer.validated_data['quantity']
+        try:
+            cart_item = CartItem.objects.create(
+                cart=cart, product=product)
+            cart_item.quantity == quantity
+            if cart_item.quantity <= 0:
+                cart_item.delete()
+            else:
+                cart_item.save()
+        except CartItem.DoesNotExist:
+            if quantity > 0:
+                serializer.save(cart=cart)
+        cart.refresh_from_db()
+        cart_serializer = CartSerializer(cart)
         return Response(cart_serializer.data)
 
+    def put(self, request):
+        cart = Cart.objects.get(user=request.user)[0]
+        serializer = CartSerializer(cart, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
-"""
-    CartItemCreateAPIView: handles HTTP POST requests for adding a new item to the cart.
-"""
+    # def delete(self, request):
+    #     cart = Cart.objects.get_or_create(user=request.user)[0]
+    #     cart.delete()
+    #     return Response(status=204)
 
+    def patch(self, request):
+        cart = Cart.objects.get(user=request.user)[0]
+        serializer = CartItemSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        product_id = serializer.validated_data['product_id']
+        quantity = serializer.validated_data['quantity']
+        try:
+            cart_item = CartItem.objects.get(cart=cart, product_id=product_id)
+            cart_item.quantity += quantity
+            if cart_item.quantity <= 0:
+                cart_item.delete()
+            else:
+                cart_item.save()
+        except CartItem.DoesNotExist:
+            if quantity > 0:
+                serializer.save(cart=cart)
+        cart.refresh_from_db()
+        cart_serializer = CartSerializer(cart)
+        return Response(cart_serializer.data)
 
-class CartItemCreateAPIView(generics.CreateAPIView):
-    serializer_class = CartItemSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # def remove_from_cart(self, request, product_id):
 
-    def perform_create(self, serializer):
-        customer = Customer.objects.get(user=self.request.user)
-        cart = Cart.objects.get(customer=customer)
-        serializer.save(cart=cart)
-
-
-"""
-    CartItemRetrieveUpdateDestroyAPIView: handles HTTP GET, PUT, and DELETE requests 
-    for retrieving, updating, and deleting a specific item in the cart, respectively.
-"""
-
-
-class CartItemRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = CartItemSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        return CartItem.objects.filter(cart__user=self.request.user)
+    def delete(self, request):
+        # cart = self.get_cart()
+        cart = Cart.objects.get(user=request.user)
+        try:
+            item = CartItem.objects.get(cart=cart, product=product)
+            if item.quantity > 1:
+                item.quantity -= 1
+                item.save()
+            else:
+                item.delete()
+        except CartItem.DoesNotExist:
+            pass
+        serializer = CartSerializer(cart)
+        return Response(serializer.data)
