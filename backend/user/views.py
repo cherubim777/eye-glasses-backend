@@ -94,7 +94,7 @@ def customerRegister(request):
             email=data["email"],
         )
         if "photo" in data:
-            retailer = Retailer.objects.create(
+            customer = Customer.objects.create(
                 user=user,
                 first_name=data["first_name"],
                 last_name=data["last_name"],
@@ -104,9 +104,6 @@ def customerRegister(request):
                 subcity=data["subcity"],
                 city=data["city"],
                 photo=data["photo"],
-                store_name=data["store_name"],
-                accepts_custom_order=data["accepts_custom_order"],
-                custom_order_price=data["custom_order_price"],
             )
         else:
             customer = Customer.objects.create(
