@@ -19,7 +19,6 @@ from user.views import IsRetailer
 
 class GetProducts(generics.ListAPIView):
     serializer_class = ProductSerializer
-    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         queryset = Product.objects.filter(quantity__gt=0)
