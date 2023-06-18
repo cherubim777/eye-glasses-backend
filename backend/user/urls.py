@@ -24,4 +24,5 @@ urlpatterns = [
         views.GetRetailerProfile.as_view(),
         name="getRetailerProfile",
     ),
+    path("acceptCustom/", views.GetCustomOrderRetailer.as_view(), name="accceptCustom"),
 ]
