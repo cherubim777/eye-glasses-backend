@@ -20,7 +20,5 @@ urlpatterns = [
         "updateProduct/<str:pk>/", views.UpdateProduct.as_view(), name="updateProduct"
     ),
     path("addReview/<int:pk>/", views.addReview, name="addReview"),
-    path(
-        "productReviews/<int:pk>", views.ProductReviews.as_view(), name="productReviews"
-    ),
+    path("getReviews/<str:pk>/", views.getReviews, name="getReviews"),
 ]

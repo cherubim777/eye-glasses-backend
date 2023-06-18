@@ -143,31 +143,33 @@ class UpdateProduct(APIView):
 
 
 @api_view(["POST"])
-@permission_classes([IsCustomer])
+@permission_classes([IsAuthenticated])
 def addReview(request, pk):
-    product = Product.objects.get(pk=pk)
+    customer = request.user.customer
 
-    review_data = {
-        "product": product.id,
-        "user": request.user.id,
-        "rating": request.data.get("rating", None),
-        "comment": request.data.get("comment", None),
-    }
-    serializer = ReviewSerializer(data=review_data)
-    if serializer.is_valid():
-        serializer.save()
-        product.num_reviews += 1
-        product.save()
-        response_data = {
-            "product": ProductSerializer(product).data,
-            "review": serializer.data,
-        }
-        return Response(response_data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    product = get_object_or_404(Product, id=pk)
+    rating = request.data.get("rating")
+    review = Review(
+        product=product,
+        customer=customer,
+        retailer=product.retailer,
+        rating=request.data.get("rating"),
+        comment=request.data.get("comment"),
+    )
+
+    review.save()
+    product.calculateRating(rating)
+
+    serializer = ReviewSerializer(review)
+    return Response(serializer.data)
 
 
-class ProductReviews(APIView):
-    def get(self, request, pk):
-        reviews = Review.objects.filter(product=pk)
-        serializer = ReviewSerializer(reviews, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+@api_view(["GET"])
+def getReviews(request, pk):
+    product = get_object_or_404(Product, id=pk)
+
+    reviews = Review.objects.filter(product=product)
+
+    serializer = ReviewSerializer(reviews, many=True)
+
+    return Response(serializer.data)

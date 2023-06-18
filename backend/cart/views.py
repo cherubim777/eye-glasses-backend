@@ -47,6 +47,7 @@ from rest_framework import generics, permissions
 from .models import Cart, CartItem
 from .serializers import CartSerializer, CartItemSerializer
 from user.models import Customer
+from rest_framework.response import Response
 
 # CartListCreateAPIView: handles HTTP GET and POST requests
 #  for listing all carts and creating new carts, respectively.
@@ -75,7 +76,10 @@ class CartRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Cart.objects.filter(user=self.request.user)
+        customer = Customer.objects.get(user=self.request.user)
+        cart = Cart.objects.get(customer=customer)
+        cart_serializer = CartSerializer(cart, many=False)
+        return Response(cart_serializer.data)
 
 
 """

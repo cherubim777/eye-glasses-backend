@@ -6,10 +6,19 @@ from user.models import Customer, Retailer
 
 # Create your models here.
 class Order(models.Model):
+    DELIVERY_CHOICES = [
+        ("GO Delivery Ethiopia", "GO Delivery Ethiopia"),
+        ("WeDeliver", "WeDeliver"),
+        ("Eshi Express", "Eshi Express"),
+        ("Awra Delivery", "Awra Delivery"),
+    ]
+
     customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True)
     retailer = models.ForeignKey(Retailer, on_delete=models.SET_NULL, null=True)
     paymentMethod = models.CharField(max_length=200)
-
+    delivery = models.CharField(
+        max_length=20, choices=DELIVERY_CHOICES, default="GO Delivery Ethiopia"
+    )
     shippingPrice = models.DecimalField(max_digits=7, decimal_places=2)
     commissionRate = models.CharField(default="2%", max_length=5)
     commissionPrice = models.DecimalField(max_digits=7, decimal_places=2)
@@ -34,7 +43,6 @@ class OrderItem(models.Model):
     name = models.CharField(max_length=200, null=True, blank=True)
     qty = models.IntegerField(null=True, blank=True, default=0)
     price = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
-    # image =
 
     def __str__(self):
         return str(self.name)
@@ -53,6 +61,13 @@ class ShippingAddress(models.Model):
 
 
 class CustomOrder(models.Model):
+    DELIVERY_CHOICES = [
+        ("GO Delivery Ethiopia", "GO Delivery Ethiopia"),
+        ("WeDeliver", "WeDeliver"),
+        ("Eshi Express", "Eshi Express"),
+        ("Awra Delivery", "Awra Delivery"),
+    ]
+
     customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True)
     retailer = models.ForeignKey(Retailer, on_delete=models.SET_NULL, null=True)
     rightSphere = models.FloatField()
@@ -74,6 +89,9 @@ class CustomOrder(models.Model):
     )
     commissionPrice = models.DecimalField(
         max_digits=7, decimal_places=2, null=True, blank=True
+    )
+    delivery = models.CharField(
+        max_length=20, choices=DELIVERY_CHOICES, default="GO Delivery Ethiopia"
     )
     isPaid = models.BooleanField(default=True)
     paidAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)

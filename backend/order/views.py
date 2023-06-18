@@ -27,7 +27,7 @@ def placeOrder(request):
     quantity = request.data.get("quantity")
     shipping_address = request.data.get("shipping_address")
     payment_method = request.data.get("payment_method")
-
+    delivery = request.data.get("delivery")
     # Retrieve the authenticated user
     user = request.user
 
@@ -101,6 +101,7 @@ def placeOrder(request):
         shippingPrice=shipping_price,
         totalPrice=total_price,
         commissionPrice=commission_rate,
+        delivery=delivery,
     )
 
     # Create a new order item
@@ -139,7 +140,7 @@ def placeCustomOrder(request):
     right_prism = request.data.get("right_prism")
     left_prism = request.data.get("left_prism")
     payment_method = request.data.get("payment_method")
-
+    delivery = request.data.get("delivery")
     # Retrieve the authenticated user
     user = request.user
 
@@ -196,6 +197,7 @@ def placeCustomOrder(request):
         shippingPrice=shipping_price,
         commissionPrice=commission_price,
         totalPrice=total_price,
+        delivery=delivery,
     )
 
     # Serialize the custom order and return it in the response

@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User, Group
-from user.models import Retailer
+from user.models import Retailer, Customer
 
 
 # Create your models here.
@@ -76,6 +76,9 @@ class Product(models.Model):
         else:
             return False
 
+    def calculateRating(self, rating):
+        self.rating = (self.rating + rating) / 2
+
     def __str__(self):
         return self.name
 
@@ -89,10 +92,11 @@ class ProductItem(models.Model):
 
 
 class Review(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    rating = models.IntegerField(null=True, blank=True, default=0)
-    comment = models.TextField(null=True, blank=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True)
+    retailer = models.ForeignKey(Retailer, on_delete=models.CASCADE)
+    rating = models.IntegerField(default=0)
+    comment = models.TextField()
 
     def __str__(self):
         return str(self.rating)

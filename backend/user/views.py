@@ -46,6 +46,11 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         data["username"] = self.user.username
         data["email"] = self.user.email
+
+        if hasattr(self.user, "customer"):
+            data["userType"] = "customer"
+        elif hasattr(self.user, "retailer"):
+            data["userType"] = "retailer"
         return data
 
 
@@ -81,55 +86,55 @@ class Logout(APIView):
 @api_view(["POST"])
 def customerRegister(request):
     data = request.data
-    # try:
-    with transaction.atomic():
-        user = User.objects.create(
-            username=data["username"],
-            password=make_password(data["password"]),
-            email=data["email"],
-        )
-        if "photo" in data:
-            customer = Customer.objects.create(
-                user=user,
-                first_name=data["first_name"],
-                last_name=data["last_name"],
-                phone_number=data["phone_number"],
+    try:
+        with transaction.atomic():
+            user = User.objects.create(
+                username=data["username"],
+                password=make_password(data["password"]),
                 email=data["email"],
-                local_address=data["local_address"],
-                subcity=data["subcity"],
-                city=data["city"],
-                photo=data["photo"],
             )
-        else:
-            customer = Customer.objects.create(
-                user=user,
-                first_name=data["first_name"],
-                last_name=data["last_name"],
-                phone_number=data["phone_number"],
-                email=data["email"],
-                local_address=data["local_address"],
-                subcity=data["subcity"],
-                city=data["city"],
-            )
-        # Create an account for the new customer with an initial balance of 100
-        # this is only to simulate money transaction between customer and retailer
-        account = Account.create(customer=customer, initial_balance=5000)
-        # create cart for the customer
-        cart = Cart.create(customer=customer)
-        user_serializer = UserSerializer(user, many=False)
-        customer_serializer = CustomerSerializer(customer, many=False)
-        account_serializer = AccountSerializer(account, many=False)
-        cart_serializer = CartSerializer(cart, many=False)
-        response_data = {
-            "user": user_serializer.data,
-            "customer": customer_serializer.data,
-            "account": account_serializer.data,
-            "cart": cart_serializer.data,
-        }
-        return Response(response_data)
-    # except:
-    #     message = {"detail": "customer with this username already exists"}
-    #     return Response(message, status=status.HTTP_400_BAD_REQUEST)
+            if "photo" in data:
+                customer = Customer.objects.create(
+                    user=user,
+                    first_name=data["first_name"],
+                    last_name=data["last_name"],
+                    phone_number=data["phone_number"],
+                    email=data["email"],
+                    local_address=data["local_address"],
+                    subcity=data["subcity"],
+                    city=data["city"],
+                    photo=data["photo"],
+                )
+            else:
+                customer = Customer.objects.create(
+                    user=user,
+                    first_name=data["first_name"],
+                    last_name=data["last_name"],
+                    phone_number=data["phone_number"],
+                    email=data["email"],
+                    local_address=data["local_address"],
+                    subcity=data["subcity"],
+                    city=data["city"],
+                )
+            # Create an account for the new customer with an initial balance of 100
+            # this is only to simulate money transaction between customer and retailer
+            account = Account.create(customer=customer, initial_balance=5000)
+            # create cart for the customer
+            cart = Cart.create(customer=customer)
+            user_serializer = UserSerializer(user, many=False)
+            customer_serializer = CustomerSerializer(customer, many=False)
+            account_serializer = AccountSerializer(account, many=False)
+            cart_serializer = CartSerializer(cart, many=False)
+            response_data = {
+                "user": user_serializer.data,
+                "customer": customer_serializer.data,
+                "account": account_serializer.data,
+                "cart": cart_serializer.data,
+            }
+            return Response(response_data)
+    except:
+        message = {"detail": "customer with this username already exists"}
+        return Response(message, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
