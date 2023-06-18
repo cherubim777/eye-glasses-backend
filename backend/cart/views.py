@@ -23,15 +23,14 @@ class CartView(APIView):
         cart = Cart.objects.get_or_create(customer=customer)[0]
         serializer = CartItemSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        product_id = serializer.validated_data['product_id']
-        quantity = serializer.validated_data['quantity']
+        product_id = serializer.validated_data["product_id"]
+        quantity = serializer.validated_data["quantity"]
         try:
             cart_item = CartItem.objects.get(cart=cart, product_id=product_id)
             cart_item.quantity += quantity
             cart_item.save()
         except CartItem.DoesNotExist:
-            cart_item = CartItem.objects.create(
-                cart=cart, product_id=product_id)
+            cart_item = CartItem.objects.create(cart=cart, product_id=product_id)
             cart_item.quantity = quantity
         cart.refresh_from_db()
         cart_serializer = CartSerializer(cart)
@@ -53,8 +52,8 @@ class CartView(APIView):
         cart = Cart.objects.get(user=request.user)[0]
         serializer = CartItemSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        product_id = serializer.validated_data['product_id']
-        quantity = serializer.validated_data['quantity']
+        product_id = serializer.validated_data["product_id"]
+        quantity = serializer.validated_data["quantity"]
         try:
             cart_item = CartItem.objects.get(cart=cart, product=product)
             cart_item.quantity += quantity

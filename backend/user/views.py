@@ -8,7 +8,6 @@ from django.contrib.auth.models import User, Group
 
 from .serializers import UserSerializer, CustomerSerializer, RetailerSerializer
 from django.contrib.auth.hashers import make_password
-from rest_framework import status
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .models import *
@@ -19,13 +18,16 @@ from rest_framework.views import APIView
 from django.contrib.auth import logout
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.permissions import BasePermission
-from payment.models import Account
-from payment.serializers import AccountSerializer
+from payment.models import CustomerAccount, RetailerAccount
+from payment.serializers import CustomerAccountSerializer, RetailerAccountSerializer
 from cart.models import *
 from cart.serializers import *
 from wishlist.models import *
 from wishlist.serializers import *
 from rest_framework import generics
+from rest_framework import generics, status
+import random
+from .email import sendMail
 
 
 class IsCustomer(BasePermission):
@@ -49,10 +51,10 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         data["username"] = self.user.username
         data["email"] = self.user.email
-        if hasattr(self.user, 'customer'):
-            data['userType'] = 'customer'
-        elif hasattr(self.user, 'retailer'):
-            data['userType'] = 'retailer'
+        if hasattr(self.user, "customer"):
+            data["userType"] = "customer"
+        elif hasattr(self.user, "retailer"):
+            data["userType"] = "retailer"
         return data
 
 
@@ -118,17 +120,18 @@ def customerRegister(request):
                 subcity=data["subcity"],
                 city=data["city"],
             )
-        # Create an account for the new customer with an initial balance of 100
+        # Create an account for the new customer with an initial balance of 500
         # this is only to simulate money transaction between customer and retailer
-        account = Account.create(customer=customer, initial_balance=5000)
+        account = CustomerAccount.create(
+            customer=customer, initial_balance=5000)
         # create cart for the customer
-        print('<<<<<<<<<<<<<<<<<here>>>>>>>>>>>>>>>>>>>>>>>>>')
+
         cart = Cart.create(customer=customer)
         wishlist = WishList.create(customer=customer)
         print('<<<<<<<<<<<<<<<<<or here>>>>>>>>>>>>>>>>>>>>>>>>>')
         user_serializer = UserSerializer(user, many=False)
         customer_serializer = CustomerSerializer(customer, many=False)
-        account_serializer = AccountSerializer(account, many=False)
+        account_serializer = CustomerAccountSerializer(account, many=False)
         cart_serializer = CartSerializer(cart, many=False)
         wishlist_serializer = WishListSerializer(wishlist, many=False)
         response_data = {
@@ -185,10 +188,10 @@ def retailerRegister(request):
             )
         # Create an account for the new retailer with an initial balance of 0
         # this is only to simulate maoney transaction
-        account = Account.create(retailer=retailer, initial_balance=0)
+        account = RetailerAccount.create(retailer=retailer, initial_balance=0)
         user_serializer = UserSerializer(user, many=False)
         retailer_serializer = RetailerSerializer(retailer, many=False)
-        account_serializer = AccountSerializer(account, many=False)
+        account_serializer = RetailerAccountSerializer(account, many=False)
         response_data = {
             "user": user_serializer.data,
             "retailer": retailer_serializer.data,
@@ -241,7 +244,7 @@ def getAllRetailers(request):
 
 
 @api_view(["PUT"])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def updateUser(request):
     user = request.user
     data = request.data
@@ -342,3 +345,56 @@ class GetCustomOrderRetailer(generics.ListAPIView):
     def get_queryset(self):
         queryset = Retailer.objects.filter(accepts_custom_order=True)
         return queryset
+
+
+@api_view(["POST"])
+def reset_password(request):
+    try:
+        username = request.data["username"]
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return Response({"message": "Username not found"}, status=404)
+    else:
+        email = user.email
+        code = random.randint(1000, 9999)
+        if hasattr(user, "customer"):
+            user.customer.set_code(code)
+        elif hasattr(user, "retailer"):
+            user.retailer.set_code(code)
+
+        sendMail(email, code)
+
+        return Response({"message": f"Password reset email sent to {email}"})
+
+
+@api_view(["POST"])
+def confirm_reset(request):
+    try:
+        username = request.data["username"]
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return Response({"message": "Username not found"}, status=404)
+
+    code = request.data["code"]
+    password = request.data["password"]
+    if hasattr(user, "customer"):
+        customer = user.customer
+        if customer.reset_password_code == code:
+            user.password = make_password(password)
+            user.save()
+            return Response(
+                {"message": "password reset successful"}, status=status.HTTP_200_OK
+            )
+        else:
+            return Response({"message": "Invalid reset password code"}, status=400)
+
+    elif hasattr(user, "retailer"):
+        retailer = user.retailer
+        if retailer.reset_password_code == code:
+            user.password = make_password(password)
+            user.save()
+            return Response(
+                {"message": "password reset successful"}, status=status.HTTP_200_OK
+            )
+        else:
+            return Response({"message": "Invalid reset password code"}, status=400)

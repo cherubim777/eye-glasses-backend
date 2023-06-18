@@ -3,6 +3,9 @@ from django.urls import path, include
 from . import views
 
 
+from django.urls import path, include
+
+
 urlpatterns = [
     path("login/", views.MyTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("logout/", views.Logout.as_view(), name="logout"),
@@ -25,4 +28,6 @@ urlpatterns = [
         name="getRetailerProfile",
     ),
     path("acceptCustom/", views.GetCustomOrderRetailer.as_view(), name="accceptCustom"),
+    path("resetPassword/", views.reset_password, name="resetPassword"),
+    path("confirmReset/", views.confirm_reset, name="confirmReset"),
 ]

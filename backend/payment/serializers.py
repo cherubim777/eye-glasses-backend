@@ -1,10 +1,16 @@
 from rest_framework import serializers
-from .models import Account, AdminAccount
+from .models import CustomerAccount, RetailerAccount, AdminAccount
 
 
-class AccountSerializer(serializers.ModelSerializer):
+class CustomerAccountSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Account
+        model = CustomerAccount
+        fields = "__all__"
+
+
+class RetailerAccountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RetailerAccount
         fields = "__all__"
 
 

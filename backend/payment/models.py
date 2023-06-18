@@ -6,13 +6,11 @@ from rest_framework.response import Response
 
 
 # the following account model is written to simulate money transaction between customer and retailer
-class Account(models.Model):
+class CustomerAccount(models.Model):
     customer = models.OneToOneField(
         Customer, on_delete=models.CASCADE, null=True, blank=True
     )
-    retailer = models.OneToOneField(
-        Retailer, on_delete=models.CASCADE, null=True, blank=True
-    )
+
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     reserved_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_reserved_balance = models.DecimalField(
@@ -20,12 +18,7 @@ class Account(models.Model):
     )
 
     def __str__(self):
-        if self.customer:
-            return f"Customer Account ({self.customer})"
-        elif self.retailer:
-            return f"Retailer Account ({self.retailer})"
-        else:
-            return "Account"
+        return f"Customer Account ({self.customer})"
 
     def increase_balance(self, amount):
         self.balance += amount
@@ -52,9 +45,31 @@ class Account(models.Model):
         retailer_account.save()
 
     @staticmethod
-    def create(customer=None, retailer=None, initial_balance=0):
-        account = Account.objects.create(
-            customer=customer, retailer=retailer, balance=initial_balance
+    def create(customer, initial_balance):
+        account = CustomerAccount.objects.create(
+            customer=customer, balance=initial_balance
+        )
+        return account
+
+
+class RetailerAccount(models.Model):
+    retailer = models.OneToOneField(
+        Retailer, on_delete=models.CASCADE, null=True, blank=True
+    )
+
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    def __str__(self):
+        return f"Retailer Account ({self.retailer.first_name} {self.retailer.last_name} --- {self.retailer.store_name})"
+
+    def increase_balance(self, amount):
+        self.balance += amount
+        self.save()
+
+    @staticmethod
+    def create(retailer, initial_balance):
+        account = RetailerAccount.objects.create(
+            retailer=retailer, balance=initial_balance
         )
         return account
 
