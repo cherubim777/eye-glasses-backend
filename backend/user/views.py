@@ -23,6 +23,8 @@ from payment.models import Account
 from payment.serializers import AccountSerializer
 from cart.models import *
 from cart.serializers import *
+from wishlist.models import *
+from wishlist.serializers import *
 from rest_framework import generics
 
 
@@ -122,16 +124,19 @@ def customerRegister(request):
         # create cart for the customer
         print('<<<<<<<<<<<<<<<<<here>>>>>>>>>>>>>>>>>>>>>>>>>')
         cart = Cart.create(customer=customer)
+        wishlist = WishList.create(customer=customer)
         print('<<<<<<<<<<<<<<<<<or here>>>>>>>>>>>>>>>>>>>>>>>>>')
         user_serializer = UserSerializer(user, many=False)
         customer_serializer = CustomerSerializer(customer, many=False)
         account_serializer = AccountSerializer(account, many=False)
         cart_serializer = CartSerializer(cart, many=False)
+        wishlist_serializer = WishListSerializer(wishlist, many=False)
         response_data = {
             "user": user_serializer.data,
             "customer": customer_serializer.data,
             "account": account_serializer.data,
             "cart": cart_serializer.data,
+            "wishlist": wishlist_serializer.data,
         }
         return Response(response_data)
     # except:
