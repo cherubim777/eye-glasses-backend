@@ -77,7 +77,13 @@ class Product(models.Model):
             return False
 
     def calculateRating(self, rating):
-        self.rating = (self.rating + rating) / 2
+        if self.rating is None:
+            self.rating = rating
+        else:
+            self.rating = (self.rating + rating) / 2
+        self.numReviews += 1
+
+        self.retailer.updateRating(self.rating)
 
     def __str__(self):
         return self.name
@@ -99,4 +105,4 @@ class Review(models.Model):
     comment = models.TextField()
 
     def __str__(self):
-        return str(self.rating)
+        return f"{self.rating} given to product {self.product.name} by {self.customer.first_name}"

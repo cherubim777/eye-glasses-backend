@@ -40,11 +40,21 @@ class Retailer(models.Model):
     city = models.CharField(max_length=30)
     photo = models.ImageField()
     accepts_custom_order = models.BooleanField(default=False)
+    price_for_custom_order = models.DecimalField(
+        max_digits=7, decimal_places=2, null=True, blank=True
+    )
     store_name = models.CharField(max_length=200)
     # store_id = models.AutoField(primary_key=True, editable=False)
     rating = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
 
     date_created = models.DateTimeField(auto_now_add=True)
+
+    def updateRating(self, rating):
+        if rating is None:
+            self.rating = rating
+
+        else:
+            self.rating = (self.rating + rating) / 2
 
     def __str__(self):
         return self.first_name

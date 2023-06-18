@@ -163,8 +163,19 @@ def placeCustomOrder(request):
             status=status.HTTP_404_NOT_FOUND,
         )
 
+    try:
+        if retailer.accepts_custom_order != True:
+            raise ValueError(
+                f"Retailer with id {retailer_id} does not accept custom orders"
+            )
+
+    except ValueError as e:
+        return Response({"error": str(e)})
+
     # Calculate the total price of the custom order
-    item_price = Decimal("500.00")  # assuming price per custom order is 500.00 birr
+    item_price = (
+        retailer.price_for_custom_order
+    )  # assuming price per custom order is 500.00 birr
     shipping_price = Decimal("100.00")  # assuming flat shipping rate of 100.00 birr
     commission_rate = Decimal("0.02")  # assuming commission rate of 2%
     commission_price = item_price * commission_rate
