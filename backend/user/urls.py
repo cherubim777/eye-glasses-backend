@@ -14,6 +14,14 @@ urlpatterns = [
     path("updateRetailer/", views.updateCustomer, name="updateCustomer"),
     path("updateUser/", views.updateUser, name="updateUser"),
     path("deletAccount/", views.deleteAccount, name="deleteAccount"),
-    path("getCustomerProfile/", views.getCustomerProfile, name="getCustomerProfile"),
-    path("getRetailerProfile/", views.getRetailerProfile, name="getRetailerProfile"),
+    path(
+        "getCustomerProfile/",
+        views.GetCustomerProfile.as_view(),
+        name="getCustomerProfile",
+    ),
+    path(
+        "getRetailerProfile/",
+        views.GetRetailerProfile.as_view(),
+        name="getRetailerProfile",
+    ),
 ]

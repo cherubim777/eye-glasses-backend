@@ -25,27 +25,24 @@ class GetProducts(generics.ListAPIView):
         return queryset
 
 
-@api_view(["GET"])
-def getProduct(request, pk):
-    try:
-        product = Product.objects.get(pk=pk)
-    except Product.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    serializer = ProductSerializer(product)
-    return Response(serializer.data)
+class GetProduct(generics.RetrieveAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    lookup_field = "pk"
 
 
-@api_view(["GET"])
-def filterProducts(request, q):
-    products = Product.objects.filter(
-        Q(name__icontains=q)
-        | Q(gender_category__icontains=q)
-        | Q(age_group__icontains=q)
-        | Q(category__icontains=q)
-    )
-    serializer = ProductSerializer(products, many=True)
-    return Response(serializer.data)
+class FilterProducts(generics.ListAPIView):
+    serializer_class = ProductSerializer
+
+    def get_queryset(self):
+        q = self.kwargs["q"]
+        queryset = Product.objects.filter(
+            Q(name__icontains=q)
+            | Q(gender_category__icontains=q)
+            | Q(age_group__icontains=q)
+            | Q(category__icontains=q)
+        )
+        return queryset
 
 
 class AddProduct(APIView):

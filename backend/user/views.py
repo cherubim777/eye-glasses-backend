@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.test import TransactionTestCase
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -23,6 +23,7 @@ from payment.models import Account
 from payment.serializers import AccountSerializer
 from cart.models import *
 from cart.serializers import *
+from rest_framework import generics
 
 
 class IsCustomer(BasePermission):
@@ -254,25 +255,61 @@ def deleteAccount(request):
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated, IsAdminUser])
-def getCustomerProfile(request):
-    user = request.user
-    try:
-        customer = Customer.objects.get(user=user)
-    except Customer.DoesNotExist:
-        return Response(status=404)
-    serializer = CustomerSerializer(customer)
-    return Response(serializer.data)
+# @api_view(["GET"])
+# @permission_classes([IsAuthenticated, IsCustomer])
+# def getCustomerProfile(request):
+#     user = request.user
+#     try:
+#         customer = Customer.objects.get(user=user)
+#     except Customer.DoesNotExist:
+#         return Response(status=404)
+#     serializer = CustomerSerializer(customer)
+#     return Response(serializer.data)
+class GetCustomerProfile(generics.RetrieveAPIView):
+    serializer_class = CustomerSerializer
+    permission_classes = [IsAuthenticated, IsCustomer]
+
+    def get_object(self):
+        user = self.request.user
+        try:
+            customer = Customer.objects.get(user=user)
+        except Customer.DoesNotExist:
+            raise Http404
+        self.check_object_permissions(self.request, customer)
+        return customer
 
 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated, IsAdminUser])
-def getRetailerProfile(request):
-    user = request.user
-    try:
-        retailer = Retailer.objects.get(user=user)
-    except Retailer.DoesNotExist:
-        return Response(status=404)
-    serializer = RetailerSerializer(retailer)
-    return Response(serializer.data)
+# class GetCustomerProfile(generics.RetrieveAPIView):
+#     serializer_class = CustomerSerializer
+#     permission_classes = [IsAuthenticated, IsCustomer]
+
+#     def get_queryset(self):
+#         user = self.request.user
+#         queryset = Customer.objects.filter(user=user)
+#         return queryset
+
+
+# @api_view(["GET"])
+# @permission_classes([IsAuthenticated, IsRetailer])
+# def getRetailerProfile(request):
+#     user = request.user
+#     try:
+#         retailer = Retailer.objects.get(user=user)
+#     except Retailer.DoesNotExist:
+#         return Response(status=404)
+#     serializer = RetailerSerializer(retailer)
+#     return Response(serializer.data)
+
+
+class GetRetailerProfile(generics.RetrieveAPIView):
+    serializer_class = RetailerSerializer
+    permission_classes = [IsAuthenticated, IsRetailer]
+
+    def get_object(self):
+        user = self.request.user
+        try:
+            retailer = Retailer.objects.get(user=user)
+        except Retailer.DoesNotExist:
+            raise Http404
+        self.check_object_permissions(self.request, retailer)
+        return retailer
