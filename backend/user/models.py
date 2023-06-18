@@ -40,8 +40,8 @@ class Retailer(models.Model):
     city = models.CharField(max_length=30)
     photo = models.ImageField()
     accepts_custom_order = models.BooleanField(default=False)
-    price_for_custom_order = models.DecimalField(
-        max_digits=7, decimal_places=2, null=True, blank=True
+    custom_order_price = models.DecimalField(
+        max_digits=7, decimal_places=2, null=True, blank=True, default=500
     )
     store_name = models.CharField(max_length=200)
     # store_id = models.AutoField(primary_key=True, editable=False)

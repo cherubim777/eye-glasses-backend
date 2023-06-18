@@ -17,11 +17,13 @@ from user.views import IsCustomer
 from user.views import IsRetailer
 
 
-@api_view(["GET"])
-def getProducts(request):
-    products = Product.objects.filter(quantity__gt=0)
-    serializer = ProductSerializer(products, many=True)
-    return Response(serializer.data)
+class GetProducts(generics.ListAPIView):
+    serializer_class = ProductSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = Product.objects.filter(quantity__gt=0)
+        return queryset
 
 
 @api_view(["GET"])

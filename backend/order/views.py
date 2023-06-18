@@ -174,7 +174,7 @@ def placeCustomOrder(request):
 
     # Calculate the total price of the custom order
     item_price = (
-        retailer.price_for_custom_order
+        retailer.custom_order_price
     )  # assuming price per custom order is 500.00 birr
     shipping_price = Decimal("100.00")  # assuming flat shipping rate of 100.00 birr
     commission_rate = Decimal("0.02")  # assuming commission rate of 2%
