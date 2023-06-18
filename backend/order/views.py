@@ -16,7 +16,7 @@ from user.models import *
 from product.models import *
 from user.views import IsCustomer, IsRetailer
 from cart.models import Cart
-from payment.models import Account, AdminAccount
+from payment.models import CustomerAccount, RetailerAccount, AdminAccount
 
 
 @api_view(["POST"])
@@ -41,7 +41,7 @@ def placeOrder(request):
         )
 
     try:
-        account = user.customer.account
+        account = user.customer.customeraccount
     except Customer.DoesNotExist:
         return Response(
             {"error": "This user is not associated with a customer account"},
@@ -152,7 +152,7 @@ def placeCustomOrder(request):
             {"error": "This user is not associated with a customer account"},
             status=status.HTTP_400_BAD_REQUEST,
         )
-    account = customer.account
+    account = customer.customeraccount
 
     # Get the retailer for the custom order
     try:
@@ -353,8 +353,8 @@ def markCustomOrderAsReady(request, custom_order_id):
 def orderFulfilled(request, order_id):
     order = Order.objects.get(id=order_id)
     if not order.isDelivered:
-        retailer_account = order.retailer.account
-        customer_account = order.customer.account
+        retailer_account = order.retailer.retaileraccount
+        customer_account = order.customer.customeraccount
         customer_account.fulfill_order(order.totalPrice, retailer_account)
         order.isDelivered = True
         order.deliveredAt = datetime.datetime.now()
@@ -368,8 +368,8 @@ def orderFulfilled(request, order_id):
 def CustomOrderFulfilled(request, order_id):
     order = CustomOrder.objects.get(id=order_id)
     if not order.isDelivered:
-        retailer_account = order.retailer.account
-        customer_account = order.customer.account
+        retailer_account = order.retailer.retaileraccount
+        customer_account = order.customer.customeraccount
         customer_account.fulfill_order(order.totalPrice, retailer_account)
         order.isDelivered = True
         order.deliveredAt = datetime.datetime.now()
@@ -384,6 +384,7 @@ def placeCartOrder(request):
     # Retrieve the necessary data from the request
     shipping_address = request.data.get("shipping_address")
     payment_method = request.data.get("payment_method")
+    delivery = request.data.get("delivery")
 
     # Retrieve the authenticated user
     user = request.user
@@ -398,7 +399,7 @@ def placeCartOrder(request):
         )
 
     try:
-        account = user.customer.account
+        account = user.customer.customeraccount
     except Customer.DoesNotExist:
         return Response(
             {"error": "This user is not associated with a customer account"},
@@ -468,6 +469,7 @@ def placeCartOrder(request):
             shippingPrice=shipping_price,
             totalPrice=total_price,
             commissionPrice=commission_amount,
+            delivery=delivery,
         )
 
         # Create a new order item

@@ -1,6 +1,7 @@
 from django.contrib import admin
-from .models import Account, AdminAccount
+from .models import CustomerAccount, RetailerAccount, AdminAccount
 
 # Register your models here.
-admin.site.register(Account)
+admin.site.register(CustomerAccount)
+admin.site.register(RetailerAccount)
 admin.site.register(AdminAccount)
