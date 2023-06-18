@@ -491,7 +491,7 @@ def placeCartOrder(request):
         orders.append(order)
 
     # Clear the customer's cart
-    cart.items.clear()
+    cart.items.delete()
 
     # Serialize the orders and return them in the response
     serializer = OrderSerializer(orders, many=True)

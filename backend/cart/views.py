@@ -21,11 +21,10 @@ class CartView(APIView):
         cart = Cart.objects.get_or_create(user=request.user)[0]
         serializer = CartItemSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        product = serializer.validated_data['product']
+        product = serializer.validated_data["product"]
         quantity = 1  # serializer.validated_data['quantity']
         try:
-            cart_item = CartItem.objects.create(
-                cart=cart, product=product)
+            cart_item = CartItem.objects.create(cart=cart, product=product)
             cart_item.quantity == quantity
             if cart_item.quantity <= 0:
                 cart_item.delete()
@@ -54,8 +53,8 @@ class CartView(APIView):
         cart = Cart.objects.get(user=request.user)[0]
         serializer = CartItemSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        product_id = serializer.validated_data['product_id']
-        quantity = serializer.validated_data['quantity']
+        product_id = serializer.validated_data["product_id"]
+        quantity = serializer.validated_data["quantity"]
         try:
             cart_item = CartItem.objects.get(cart=cart, product_id=product_id)
             cart_item.quantity += quantity
