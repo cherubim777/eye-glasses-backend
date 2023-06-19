@@ -94,3 +94,13 @@ class CartItemDeleteView(APIView):
                 item.delete()
         serializer = CartSerializer(cart)
         return Response(serializer.data)
+
+
+class CartItemClearView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        customer = Customer.objects.get(user=request.user)
+        cart = Cart.objects.get(customer=customer)
+        cart.clear_item()
+        return Response(status=status.HTTP_204_NO_CONTENT)

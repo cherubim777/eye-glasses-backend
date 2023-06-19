@@ -22,6 +22,9 @@ from payment.models import CustomerAccount, RetailerAccount
 from payment.serializers import CustomerAccountSerializer, RetailerAccountSerializer
 from cart.models import *
 from cart.serializers import *
+from wishlist.models import *
+from wishlist.serializers import *
+from rest_framework import generics
 from rest_framework import generics, status
 import random
 from .email import sendMail
@@ -119,19 +122,24 @@ def customerRegister(request):
             )
         # Create an account for the new customer with an initial balance of 500
         # this is only to simulate money transaction between customer and retailer
-        account = CustomerAccount.create(customer=customer, initial_balance=5000)
+        account = CustomerAccount.create(
+            customer=customer, initial_balance=5000)
         # create cart for the customer
 
         cart = Cart.create(customer=customer)
+        wishlist = WishList.create(customer=customer)
+        print('<<<<<<<<<<<<<<<<<or here>>>>>>>>>>>>>>>>>>>>>>>>>')
         user_serializer = UserSerializer(user, many=False)
         customer_serializer = CustomerSerializer(customer, many=False)
         account_serializer = CustomerAccountSerializer(account, many=False)
         cart_serializer = CartSerializer(cart, many=False)
+        wishlist_serializer = WishListSerializer(wishlist, many=False)
         response_data = {
             "user": user_serializer.data,
             "customer": customer_serializer.data,
             "account": account_serializer.data,
             "cart": cart_serializer.data,
+            "wishlist": wishlist_serializer.data,
         }
         return Response(response_data)
     # except:
