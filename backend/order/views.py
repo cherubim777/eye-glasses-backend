@@ -234,9 +234,7 @@ def getRetailerCustomOrders(request):
         )
     order_dict = []
     # Retrieve the retailer's custom orders
-    custom_orders = (
-        CustomOrder.objects.filter(retailer=retailer).order_by("-createdAt").reverse()
-    )
+    custom_orders = CustomOrder.objects.filter(retailer=retailer).order_by("-createdAt")
     for order in custom_orders:
         customer_first_name = order.customer.first_name
         customer_last_name = order.customer.last_name
@@ -253,8 +251,9 @@ def getRetailerCustomOrders(request):
         }
         # Serialize the custom orders and return them in the response
         data_serializer = OrderDataSerializer(data=order_data)
-        serializer = CustomOrderSerializer(custom_orders, many=True)
-        if serializer.is_valid:
+
+        if data_serializer.is_valid:
+            serializer = CustomOrderSerializer(custom_orders, many=True)
             the_order = {
                 "custom_order": serializer.data,
                 "order_data": data_serializer.initial_data,
@@ -282,9 +281,7 @@ def getCustomerCustomOrders(request):
         )
     order_dict = []
     # Retrieve the retailer's custom orders
-    custom_orders = (
-        CustomOrder.objects.filter(customer=customer).order_by("-createdAt").reverse()
-    )
+    custom_orders = CustomOrder.objects.filter(customer=customer).order_by("-createdAt")
     for order in custom_orders:
         customer_first_name = order.customer.first_name
         customer_last_name = order.customer.last_name
@@ -332,9 +329,7 @@ class GetRetailerOrders(APIView):
 
         # Retrieve the retailer's orders (that are not custom orders)
         order_dict = []
-        orders = (
-            Order.objects.filter(retailer=retailer).order_by("-createdAt").reverse()
-        )
+        orders = Order.objects.filter(retailer=retailer).order_by("-createdAt")
         for order in orders:
             order_serializer = OrderSerializer(order, many=False)
             customer_first_name = order.customer.first_name
@@ -389,9 +384,7 @@ class GetCustomerOrders(APIView):
 
         # Retrieve the retailer's orders (that are not custom orders)
         order_dict = []
-        orders = (
-            Order.objects.filter(customer=customer).order_by("-createdAt").reverse()
-        )
+        orders = Order.objects.filter(customer=customer).order_by("-createdAt")
         for order in orders:
             order_serializer = OrderSerializer(order, many=False)
             customer_first_name = order.customer.first_name

@@ -58,12 +58,14 @@ class Retailer(models.Model):
 
     def updateRating(self, rating):
         if rating is None:
-            self.rating = Decimal(rating)
+            self.rating = 0
+            self.rating += Decimal(rating)
 
         else:
             self.rating = (Decimal(self.rating) + Decimal(rating)) / (
                 self.numReviews + 1
             )
+        self.save()
 
     def set_code(self, code):
         self.reset_password_code = code
