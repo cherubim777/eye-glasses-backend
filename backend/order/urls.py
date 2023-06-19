@@ -7,7 +7,7 @@ urlpatterns = [
     path("placeCustomOrder/", views.placeCustomOrder, name="placeCustomOrder"),
     path(
         "getRetailerOrders/",
-        views.getRetailerOrders,
+        views.GetRetailerOrders.as_view(),
         name="getRetailerOrders",
     ),
     path("orderFulfilled/<str:order_id>/", views.orderFulfilled, name="orderFulfilled"),

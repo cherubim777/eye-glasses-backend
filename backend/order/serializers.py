@@ -27,3 +27,12 @@ class CustomOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomOrder
         fields = "__all__"
+
+
+class OrderDataSerializer(serializers.Serializer):
+    customer = serializers.CharField()
+    retailer = serializers.CharField()
+    store_name = serializers.CharField()
+    quantity = serializers.IntegerField()
+    image = serializers.ImageField()
+    product_name = serializers.CharField()
