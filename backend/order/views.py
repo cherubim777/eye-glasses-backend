@@ -219,7 +219,7 @@ def placeCustomOrder(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsCustomer])
+@permission_classes([IsAuthenticated, IsRetailer])
 def getRetailerCustomOrders(request):
     # Retrieve the authenticated user
     user = request.user
