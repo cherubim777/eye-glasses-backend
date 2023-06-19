@@ -219,7 +219,7 @@ def placeCustomOrder(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated, IsRetailer])
+@permission_classes([IsAuthenticated, IsCustomer])
 def getRetailerCustomOrders(request):
     # Retrieve the authenticated user
     user = request.user
@@ -227,20 +227,43 @@ def getRetailerCustomOrders(request):
     # Get the retailer associated with the user
     try:
         retailer = user.retailer
-    except Retailer.DoesNotExist:
+    except retailer.DoesNotExist:
         return Response(
             {"error": "This user is not associated with a retailer account"},
             status=status.HTTP_400_BAD_REQUEST,
         )
-
+    order_dict = []
     # Retrieve the retailer's custom orders
     custom_orders = (
         CustomOrder.objects.filter(retailer=retailer).order_by("-createdAt").reverse()
     )
+    for order in custom_orders:
+        customer_first_name = order.customer.first_name
+        customer_last_name = order.customer.last_name
+        customer = f"{customer_first_name} {customer_last_name}"
+        retailer_first_name = order.retailer.first_name
+        retailer_last_name = order.retailer.last_name
+        retailer = f"{retailer_first_name} {retailer_last_name}"
+        store_name = order.retailer.store_name
 
-    # Serialize the custom orders and return them in the response
-    serializer = CustomOrderSerializer(custom_orders, many=True)
-    return Response(serializer.data)
+        order_data = {
+            "customer": customer,
+            "retailer": retailer,
+            "store_name": store_name,
+        }
+        # Serialize the custom orders and return them in the response
+        data_serializer = OrderDataSerializer(data=order_data)
+        serializer = CustomOrderSerializer(custom_orders, many=True)
+        if serializer.is_valid:
+            the_order = {
+                "custom_order": serializer.data,
+                "order_data": data_serializer.initial_data,
+            }
+            order_dict.append(the_order)
+        else:
+            errors = serializer.errors
+
+    return Response({"custom_orders": order_dict})
 
 
 @api_view(["GET"])
@@ -254,7 +277,7 @@ def getCustomerCustomOrders(request):
         customer = user.customer
     except customer.DoesNotExist:
         return Response(
-            {"error": "This user is not associated with a retailer account"},
+            {"error": "This user is not associated with a customer account"},
             status=status.HTTP_400_BAD_REQUEST,
         )
     order_dict = []

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db.models.query import QuerySet
@@ -57,10 +58,12 @@ class Retailer(models.Model):
 
     def updateRating(self, rating):
         if rating is None:
-            self.rating = rating
+            self.rating = Decimal(rating)
 
         else:
-            self.rating = (self.rating + rating) / 2
+            self.rating = (Decimal(self.rating) + Decimal(rating)) / (
+                self.numReviews + 1
+            )
 
     def set_code(self, code):
         self.reset_password_code = code

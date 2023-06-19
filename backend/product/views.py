@@ -15,6 +15,7 @@ from django.contrib.auth.models import User
 from rest_framework.decorators import permission_classes
 from user.views import IsCustomer
 from user.views import IsRetailer
+from rest_framework import viewsets
 
 
 class GetProducts(generics.ListAPIView):
@@ -171,3 +172,17 @@ def getReviews(request, pk):
     serializer = ReviewSerializer(reviews, many=True)
 
     return Response(serializer.data)
+
+
+class GetLatest(generics.ListAPIView):
+    serializer_class = ProductSerializer
+
+    def get_queryset(self):
+        return Product.objects.order_by("-createdAt")[:20]
+
+
+class GetFeatured(generics.ListAPIView):
+    serializer_class = ProductSerializer
+
+    def get_queryset(self):
+        return Product.objects.order_by("-rating")

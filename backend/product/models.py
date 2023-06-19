@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.db import models
 from django.contrib.auth.models import User, Group
 from user.models import Retailer, Customer
@@ -78,9 +79,12 @@ class Product(models.Model):
 
     def calculateRating(self, rating):
         if self.rating is None:
-            self.rating = rating
+            self.rating = Decimal(rating)
+            self.numReviews = 1
         else:
-            self.rating = (self.rating + rating) / 2
+            self.rating = (Decimal(self.rating) + Decimal(rating)) / (
+                self.numReviews + 1
+            )
         self.numReviews += 1
 
         self.retailer.updateRating(self.rating)

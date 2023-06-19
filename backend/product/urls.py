@@ -23,4 +23,6 @@ urlpatterns = [
     ),
     path("addReview/<int:pk>/", views.addReview, name="addReview"),
     path("getReviews/<str:pk>/", views.getReviews, name="getReviews"),
+    path("getLatest/", views.GetLatest.as_view(), name="getLatest"),
+    path("getFeatured/", views.GetFeatured.as_view(), name="getFeatured"),
 ]
