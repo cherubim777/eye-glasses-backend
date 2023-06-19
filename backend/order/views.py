@@ -251,9 +251,8 @@ def getRetailerCustomOrders(request):
         }
         # Serialize the custom orders and return them in the response
         data_serializer = OrderDataSerializer(data=order_data)
-
-        if data_serializer.is_valid:
-            serializer = CustomOrderSerializer(custom_orders, many=True)
+        serializer = CustomOrderSerializer(custom_orders, many=True)
+        if serializer.is_valid:
             the_order = {
                 "custom_order": serializer.data,
                 "order_data": data_serializer.initial_data,
@@ -298,7 +297,7 @@ def getCustomerCustomOrders(request):
         }
         # Serialize the custom orders and return them in the response
         data_serializer = OrderDataSerializer(data=order_data)
-        serializer = CustomOrderSerializer(custom_orders, many=True)
+        serializer = CustomOrderSerializer(order, many=True)
         if serializer.is_valid:
             the_order = {
                 "custom_order": serializer.data,
