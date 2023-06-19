@@ -19,8 +19,9 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
-admin.site.site_header = "Vision Admin Page"
-admin.site.index_title = "Tables"
+
+admin.site.site_header = "Vision Administration"
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -30,6 +31,11 @@ urlpatterns = [
     path("order/", include("order.urls")),
     path("wishlist/", include("wishlist.urls")),
     path("payment/", include("payment.urls")),
+    path("jet/", include(("jet.urls", "jet"))),
+    path(
+        "jet/dashboard/",
+        include("jet.dashboard.urls", "jet-dashboard"),
+    ),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
