@@ -85,3 +85,20 @@ class AdminAccount(models.Model):
     def increase_balance(self, amount):
         self.balance += amount
         self.save()
+
+
+class SingletonModelManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().first()
+
+
+class SingletonModel(models.Model):
+    objects = SingletonModelManager()
+
+    class Meta:
+        abstract = True
+
+
+class MySingletonModel(SingletonModel):
+    name = models.CharField(max_length=255)
+    # add additional fields as needed
