@@ -2,6 +2,7 @@ from decimal import Decimal
 from django.db import models
 from django.contrib.auth.models import User, Group
 from user.models import Retailer, Customer
+from django.db.models.functions import Coalesce
 
 
 # Create your models here.
@@ -78,15 +79,8 @@ class Product(models.Model):
             return False
 
     def calculateRating(self, rating):
-        if self.rating is None:
-            self.rating = 0
-            self.rating += Decimal(rating)
-            self.numReviews = 1
-        else:
-            self.rating = (Decimal(self.rating) + Decimal(rating)) / (
-                self.numReviews + 1
-            )
-            self.numReviews += 1
+        self.rating = (Decimal(self.rating) + Decimal(rating)) / (self.numReviews + 1)
+        self.numReviews += 1
 
         self.retailer.updateRating(self.rating)
         self.save()

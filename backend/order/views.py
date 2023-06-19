@@ -482,7 +482,12 @@ def markCustomOrderAsReady(request, custom_order_id):
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated, IsCustomer])
 def orderFulfilled(request, order_id):
-    order = Order.objects.get(id=order_id)
+    try:
+        order = Order.objects.get(id=order_id)
+    except Order.DoesNotExist:
+        return Response(
+            {"message": "Order not found"}, status=status.HTTP_404_NOT_FOUND
+        )
     if not order.isDelivered:
         retailer_account = order.retailer.retaileraccount
         customer_account = order.customer.customeraccount

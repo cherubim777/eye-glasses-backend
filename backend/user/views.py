@@ -357,7 +357,7 @@ def reset_password(request):
         return Response({"message": "Username not found"}, status=404)
     else:
         email = user.email
-        code = random.randint(1000, 9999)
+        code = random.randint(10000, 99999)
         if hasattr(user, "customer"):
             user.customer.set_code(code)
         elif hasattr(user, "retailer"):
@@ -365,7 +365,10 @@ def reset_password(request):
 
         sendMail(email, code)
 
-        return Response({"message": f"Password reset email sent to {email}"})
+        return Response(
+            {"message": f"Password reset email sent to {email}"},
+            status=status.HTTP_200_OK,
+        )
 
 
 @api_view(["POST"])

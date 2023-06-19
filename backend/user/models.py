@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db.models.query import QuerySet
 from django.db.models.signals import post_save
 from django.contrib.auth.models import User
+from django.db.models.functions import Coalesce
 
 
 # Create your models here.
@@ -51,20 +52,19 @@ class Retailer(models.Model):
     )
     store_name = models.CharField(max_length=200)
     # store_id = models.AutoField(primary_key=True, editable=False)
-    rating = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    rating = models.DecimalField(
+        max_digits=7, decimal_places=2, null=True, blank=True, default=0
+    )
     reset_password_code = models.CharField(max_length=100, null=True, blank=True)
 
     date_created = models.DateTimeField(auto_now_add=True)
 
     def updateRating(self, rating):
-        if rating is None:
-            self.rating = 0
-            self.rating += Decimal(rating)
-
+        if self.rating == 0:
+            self.rating = rating
         else:
-            self.rating = (Decimal(self.rating) + Decimal(rating)) / (
-                self.numReviews + 1
-            )
+            self.rating = (Decimal(self.rating) + Decimal(rating)) / 2
+
         self.save()
 
     def set_code(self, code):

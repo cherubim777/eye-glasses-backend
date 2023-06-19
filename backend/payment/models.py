@@ -87,19 +87,19 @@ class RetailerAccount(models.Model):
 #         self.save()
 
 
-class SingletonModelManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().first()
+# class SingletonModelManager(models.Manager):
+#     def get_queryset(self):
+#         return super().get_queryset().first()
 
 
-class SingletonModel(models.Model):
-    objects = SingletonModelManager()
+# class SingletonModel(models.Model):
+#     objects = SingletonModelManager()
 
-    class Meta:
-        abstract = True
+#     class Meta:
+#         abstract = True
 
 
-class AdminAccount(SingletonModel):
+class AdminAccount(models.Model):
     name = models.CharField(max_length=255, default="Vision EyeGlass Shopping")
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
