@@ -84,6 +84,7 @@ class Product(models.Model):
         self.numReviews += 1
 
         self.retailer.updateRating(self.rating)
+        self.save()
 
     def __str__(self):
         return self.name

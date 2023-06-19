@@ -122,13 +122,12 @@ def customerRegister(request):
             )
         # Create an account for the new customer with an initial balance of 500
         # this is only to simulate money transaction between customer and retailer
-        account = CustomerAccount.create(
-            customer=customer, initial_balance=5000)
+        account = CustomerAccount.create(customer=customer, initial_balance=5000)
         # create cart for the customer
 
         cart = Cart.create(customer=customer)
         wishlist = WishList.create(customer=customer)
-        print('<<<<<<<<<<<<<<<<<or here>>>>>>>>>>>>>>>>>>>>>>>>>')
+        print("<<<<<<<<<<<<<<<<<or here>>>>>>>>>>>>>>>>>>>>>>>>>")
         user_serializer = UserSerializer(user, many=False)
         customer_serializer = CustomerSerializer(customer, many=False)
         account_serializer = CustomerAccountSerializer(account, many=False)
@@ -150,57 +149,57 @@ def customerRegister(request):
 @api_view(["POST"])
 def retailerRegister(request):
     data = request.data
-    # try:
-    with transaction.atomic():
-        user = User.objects.create(
-            username=data["username"],
-            password=make_password(data["password"]),
-            email=data["email"],
-        )
-        if "photo" in data:
-            retailer = Retailer.objects.create(
-                user=user,
-                first_name=data["first_name"],
-                last_name=data["last_name"],
-                phone_number=data["phone_number"],
+    try:
+        with transaction.atomic():
+            user = User.objects.create(
+                username=data["username"],
+                password=make_password(data["password"]),
                 email=data["email"],
-                local_address=data["local_address"],
-                subcity=data["subcity"],
-                city=data["city"],
-                photo=data["photo"],
-                store_name=data["store_name"],
-                accepts_custom_order=data["accepts_custom_order"],
-                custom_order_price=data["custom_order_price"],
             )
-        else:
-            retailer = Retailer.objects.create(
-                user=user,
-                first_name=data["first_name"],
-                last_name=data["last_name"],
-                phone_number=data["phone_number"],
-                email=data["email"],
-                local_address=data["local_address"],
-                store_name=data["store_name"],
-                subcity=data["subcity"],
-                city=data["city"],
-                accepts_custom_order=data["accepts_custom_order"],
-                custom_order_price=data["custom_order_price"],
-            )
-        # Create an account for the new retailer with an initial balance of 0
-        # this is only to simulate maoney transaction
-        account = RetailerAccount.create(retailer=retailer, initial_balance=0)
-        user_serializer = UserSerializer(user, many=False)
-        retailer_serializer = RetailerSerializer(retailer, many=False)
-        account_serializer = RetailerAccountSerializer(account, many=False)
-        response_data = {
-            "user": user_serializer.data,
-            "retailer": retailer_serializer.data,
-            "account": account_serializer.data,
-        }
-        return Response(response_data)
-    # except:
-    #     message = {"detail": "retailer with this username already exists"}
-    #     return Response(message, status=status.HTTP_400_BAD_REQUEST)
+            if "photo" in data:
+                retailer = Retailer.objects.create(
+                    user=user,
+                    first_name=data["first_name"],
+                    last_name=data["last_name"],
+                    phone_number=data["phone_number"],
+                    email=data["email"],
+                    local_address=data["local_address"],
+                    subcity=data["subcity"],
+                    city=data["city"],
+                    photo=data["photo"],
+                    store_name=data["store_name"],
+                    accepts_custom_order=data["accepts_custom_order"],
+                    custom_order_price=data["custom_order_price"],
+                )
+            else:
+                retailer = Retailer.objects.create(
+                    user=user,
+                    first_name=data["first_name"],
+                    last_name=data["last_name"],
+                    phone_number=data["phone_number"],
+                    email=data["email"],
+                    local_address=data["local_address"],
+                    store_name=data["store_name"],
+                    subcity=data["subcity"],
+                    city=data["city"],
+                    accepts_custom_order=data["accepts_custom_order"],
+                    custom_order_price=data["custom_order_price"],
+                )
+            # Create an account for the new retailer with an initial balance of 0
+            # this is only to simulate maoney transaction
+            account = RetailerAccount.create(retailer=retailer, initial_balance=0)
+            user_serializer = UserSerializer(user, many=False)
+            retailer_serializer = RetailerSerializer(retailer, many=False)
+            account_serializer = RetailerAccountSerializer(account, many=False)
+            response_data = {
+                "user": user_serializer.data,
+                "retailer": retailer_serializer.data,
+                "account": account_serializer.data,
+            }
+            return Response(response_data)
+    except:
+        message = {"detail": "retailer with this username already exists"}
+        return Response(message, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["PUT"])
@@ -219,7 +218,9 @@ def updateCustomer(request):
 @permission_classes([IsAuthenticated])
 def updateRetailer(request):
     retailer = request.user.retailer
-    serializer = RetailerSerializer(retailer, data=request.data)
+    # serializer = RetailerSerializer(retailer, data=request.data)
+    serializer = RetailerSerializer(retailer, data=request.data, partial=True)
+
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)

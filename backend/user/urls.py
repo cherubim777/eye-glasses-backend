@@ -14,7 +14,7 @@ urlpatterns = [
     path("getAllCustomers/", views.getAllCustomers, name="getAllCustomers"),
     path("getAllRetailers/", views.getAllRetailers, name="getAllRetailers"),
     path("updateCustomer/", views.updateCustomer, name="updateCustomer"),
-    path("updateRetailer/", views.updateCustomer, name="updateCustomer"),
+    path("updateRetailer/", views.updateRetailer, name="updateRetailer"),
     path("updateUser/", views.updateUser, name="updateUser"),
     path("deletAccount/", views.deleteAccount, name="deleteAccount"),
     path(
