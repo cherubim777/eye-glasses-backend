@@ -423,7 +423,7 @@ def placeCartOrder(request):
     orders = []
     for cart_item in cart.items.all():
         # Get the product associated with the cart item
-        product = cart_item.product
+        product = cart_item.product_id
         retailer = product.retailer
 
         # Check if the product has enough quantity to fulfill the order
@@ -493,7 +493,7 @@ def placeCartOrder(request):
         orders.append(order)
 
     # Clear the customer's cart
-    cart.items.delete()
+    # cart.items.delete()
 
     # Serialize the orders and return them in the response
     serializer = OrderSerializer(orders, many=True)

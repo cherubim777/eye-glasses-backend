@@ -3,9 +3,18 @@ from .models import Cart, CartItem
 
 
 class CartItemSerializer(serializers.ModelSerializer):
+    price = serializers.SerializerMethodField()
+
     class Meta:
         model = CartItem
         fields = ('__all__')
+
+    def get_price(self, obj):
+        """
+        Calculate the price of the cart item based on the product's price
+        and the quantity of the item in the cart.
+        """
+        return obj.product_id.price
 
 
 class CartSerializer(serializers.ModelSerializer):
@@ -44,3 +53,11 @@ class CartSerializer(serializers.ModelSerializer):
         for item_data in items_data:
             CartItem.objects.create(cart=instance, **item_data)
         return instance
+
+    def create(self, validated_data):
+        """
+        Associate the cart with the current logged-in user.
+        """
+        customer = self.context['request'].user.customer
+        validated_data['customer'] = customer
+        return super().create(validated_data)

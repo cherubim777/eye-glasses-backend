@@ -122,8 +122,7 @@ def customerRegister(request):
         account = CustomerAccount.create(customer=customer, initial_balance=5000)
         # create cart for the customer
 
-        cart = Cart.create(user=user)
-
+        cart = Cart.create(customer=customer)
         user_serializer = UserSerializer(user, many=False)
         customer_serializer = CustomerSerializer(customer, many=False)
         account_serializer = CustomerAccountSerializer(account, many=False)
