@@ -206,7 +206,7 @@ def retailerRegister(request):
 @permission_classes([IsAuthenticated])
 def updateCustomer(request):
     customer = request.user.customer
-    serializer = CustomerSerializer(customer, data=request.data)
+    serializer = CustomerSerializer(customer, data=request.data, partial=True)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)
@@ -218,7 +218,7 @@ def updateCustomer(request):
 @permission_classes([IsAuthenticated])
 def updateRetailer(request):
     retailer = request.user.retailer
-    # serializer = RetailerSerializer(retailer, data=request.data)
+
     serializer = RetailerSerializer(retailer, data=request.data, partial=True)
 
     if serializer.is_valid():

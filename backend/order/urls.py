@@ -27,7 +27,11 @@ urlpatterns = [
         views.getRetailerCustomOrders,
         name="getRetailCustomOrder",
     ),
-    path("getCustomerOrders/", views.getCustomerOrders, name="getCustomerOrders"),
+    path(
+        "getCustomerOrders/",
+        views.GetCustomerOrders.as_view(),
+        name="getCustomerOrders",
+    ),
     path(
         "markReady/<str:custom_order_id>/",
         views.markCustomOrderAsReady,

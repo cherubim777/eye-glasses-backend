@@ -325,27 +325,84 @@ class GetRetailerOrders(APIView):
         return Response({"orders": order_dict})
 
 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated, IsCustomer])
-def getCustomerOrders(request):
-    # Retrieve the authenticated user
-    user = request.user
+class GetCustomerOrders(APIView):
+    permission_classes = [IsAuthenticated, IsCustomer]
 
-    # Get the customer associated with the user
-    try:
-        customer = user.customer
-    except Customer.DoesNotExist:
-        return Response(
-            {"error": "This user is not associated with a customer account"},
-            status=status.HTTP_400_BAD_REQUEST,
+    def get(self, request, format=None):
+        # Retrieve the authenticated user
+        user = request.user
+
+        # Get the retailer associated with the user
+        try:
+            customer = user.customer
+        except customer.DoesNotExist:
+            return Response(
+                {"error": "This user is not associated with a retailer account"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Retrieve the retailer's orders (that are not custom orders)
+        order_dict = []
+        orders = (
+            Order.objects.filter(customer=customer).order_by("-createdAt").reverse()
         )
+        for order in orders:
+            order_serializer = OrderSerializer(order, many=False)
+            customer_first_name = order.customer.first_name
+            customer_last_name = order.customer.last_name
+            customer = f"{customer_first_name} {customer_last_name}"
+            retailer_first_name = order.retailer.first_name
+            retailer_last_name = order.retailer.last_name
+            retailer = f"{retailer_first_name} {retailer_last_name}"
+            store_name = order.retailer.store_name
+            order_item = OrderItem.objects.get(order=order)
+            quantity = order_item.qty
+            product = order_item.product
+            image = request.build_absolute_uri(product.photo.url)
+            product_name = product.name
 
-    # Retrieve the customer's orders (that are not custom orders)
-    orders = Order.objects.filter(customer=customer).order_by("-createdAt").reverse()
+            order_data = {
+                "customer": customer,
+                "retailer": retailer,
+                "store_name": store_name,
+                "quantity": quantity,
+                "photo": image,
+                "product_name": product_name,
+            }
+            serializer = OrderDataSerializer(data=order_data)
+            if serializer.is_valid:
+                the_order = {
+                    "order": order_serializer.data,
+                    "order_data": serializer.initial_data,
+                }
+                order_dict.append(the_order)
+            else:
+                errors = serializer.errors
 
-    # Serialize the orders and return them in the response
-    serializer = OrderSerializer(orders, many=True, context={"request": request})
-    return Response(serializer.data)
+        return Response({"orders": order_dict})
+
+
+# @api_view(["GET"])
+# @permission_classes([IsAuthenticated, IsCustomer])
+# def getCustomerOrders(request):
+#     # Retrieve the authenticated user
+#     user = request.user
+
+#     # Get the customer associated with the user
+#     try:
+#         customer = user.customer
+#     except Customer.DoesNotExist:
+#         return Response(
+#             {"error": "This user is not associated with a customer account"},
+#             status=status.HTTP_400_BAD_REQUEST,
+#         )
+
+#     # Retrieve the customer's orders (that are not custom orders)
+#     orders = Order.objects.filter(customer=customer).order_by("-createdAt").reverse()
+
+#     # Serialize the orders and return them in the response
+#     serializer = OrderSerializer(orders, many=True, context={"request": request})
+#     return Response(serializer.data)
 
 
 @api_view(["PUT"])
