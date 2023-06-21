@@ -30,4 +30,9 @@ urlpatterns = [
     path("acceptCustom/", views.GetCustomOrderRetailer.as_view(), name="accceptCustom"),
     path("resetPassword/", views.reset_password, name="resetPassword"),
     path("confirmReset/", views.confirm_reset, name="confirmReset"),
+    path(
+        "getCustomerProfile/<str:id>",
+        views.GetCustomerProfileById.as_view(),
+        name="GetCustomerProfileById",
+    ),
 ]

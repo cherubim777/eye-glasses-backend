@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.http import Http404, JsonResponse
 from django.test import TransactionTestCase
 from rest_framework.decorators import api_view, permission_classes
@@ -284,6 +284,24 @@ class GetCustomerProfile(generics.RetrieveAPIView):
 
     def get_object(self):
         user = self.request.user
+        try:
+            customer = Customer.objects.get(user=user)
+        except Customer.DoesNotExist:
+            raise Http404
+        self.check_object_permissions(self.request, customer)
+        return customer
+
+
+class GetCustomerProfileById(generics.RetrieveAPIView):
+    serializer_class = CustomerSerializer
+    permission_classes = [IsAuthenticated, IsCustomer]
+
+    def get_object(self):
+        user_id = self.kwargs.get("id")
+        if user_id is None:
+            user = self.request.user
+        else:
+            user = get_object_or_404(User, id=user_id)
         try:
             customer = Customer.objects.get(user=user)
         except Customer.DoesNotExist:
