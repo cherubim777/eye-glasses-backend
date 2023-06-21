@@ -148,8 +148,8 @@ def addReview(request, pk):
 
     product = get_object_or_404(Product, id=pk)
     rating = request.data.get("rating")
-    if rating == None:
-        rating = 0
+    if rating == "null":
+        rating = None
     review = Review(
         product=product,
         customer=customer,
