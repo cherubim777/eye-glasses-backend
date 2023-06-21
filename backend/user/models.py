@@ -45,7 +45,7 @@ class Retailer(models.Model):
     local_address = models.CharField(max_length=30)
     subcity = models.CharField(max_length=30)
     city = models.CharField(max_length=30)
-    photo = models.ImageField()
+    photo = models.ImageField(null=True, blank=True)
     accepts_custom_order = models.BooleanField(default=False)
     custom_order_price = models.DecimalField(
         max_digits=7, decimal_places=2, null=True, blank=True, default=500
