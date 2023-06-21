@@ -188,7 +188,8 @@ def retailerRegister(request):
         # Create an account for the new retailer with an initial balance of 0
         # this is only to simulate maoney transaction
         if "custom_order_price" in data:
-            retailer.custom_order_price = Decimal(data["custom_order_price"])
+            retailer.custom_order_price = data["custom_order_price"]
+
         account = RetailerAccount.create(retailer=retailer, initial_balance=0)
         user_serializer = UserSerializer(user, many=False)
         retailer_serializer = RetailerSerializer(retailer, many=False)
