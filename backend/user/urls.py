@@ -35,4 +35,9 @@ urlpatterns = [
         views.GetCustomerProfileById.as_view(),
         name="GetCustomerProfileById",
     ),
+    path(
+        "getRetailerProfile/<str:id>",
+        views.GetRetailerProfileById.as_view(),
+        name="GetRetailerProfileById",
+    ),
 ]
