@@ -37,4 +37,5 @@ urlpatterns = [
         views.markCustomOrderAsReady,
         name="markReady",
     ),
+    path("numberOfOrders/", views.GetNumberOfOrders.as_view()),
 ]

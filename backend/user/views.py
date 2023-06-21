@@ -169,7 +169,7 @@ def retailerRegister(request):
                     photo=data["photo"],
                     store_name=data["store_name"],
                     accepts_custom_order=data["accepts_custom_order"],
-                    custom_order_price=data["custom_order_price"],
+                    custom_order_price=data.get["custom_order_price"],
                 )
             else:
                 retailer = Retailer.objects.create(
@@ -183,7 +183,7 @@ def retailerRegister(request):
                     subcity=data["subcity"],
                     city=data["city"],
                     accepts_custom_order=data["accepts_custom_order"],
-                    custom_order_price=data["custom_order_price"],
+                    custom_order_price=data.get["custom_order_price"],
                 )
             # Create an account for the new retailer with an initial balance of 0
             # this is only to simulate maoney transaction

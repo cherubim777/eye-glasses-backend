@@ -503,15 +503,18 @@ def orderFulfilled(request, order_id):
 @permission_classes([IsAuthenticated, IsCustomer])
 def CustomOrderFulfilled(request, order_id):
     order = CustomOrder.objects.get(id=order_id)
-    if not order.isDelivered:
-        retailer_account = order.retailer.retaileraccount
-        customer_account = order.customer.customeraccount
-        customer_account.fulfill_order(order.totalPrice, retailer_account)
-        order.isDelivered = True
-        order.deliveredAt = datetime.datetime.now()
-        order.save()
+    if order.isReady:
+        if not order.isDelivered:
+            retailer_account = order.retailer.retaileraccount
+            customer_account = order.customer.customeraccount
+            customer_account.fulfill_order(order.totalPrice, retailer_account)
+            order.isDelivered = True
+            order.deliveredAt = datetime.datetime.now()
+            order.save()
 
-    return Response({"message": "money transferred to retailer account"})
+        return Response({"message": "money transferred to retailer account"})
+    else:
+        return Response({"message": "order is not ready yet"})
 
 
 @api_view(["POST"])
@@ -634,3 +637,48 @@ def placeCartOrder(request):
     # Serialize the orders and return them in the response
     serializer = OrderSerializer(orders, many=True)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class GetNumberOfOrders(APIView):
+    permission_classes = [IsAuthenticated, IsRetailer]
+
+    def get(self, request, format=None):
+        # Retrieve the authenticated user
+        user = request.user
+
+        # Get the retailer associated with the user
+        try:
+            retailer = user.retailer
+        except Retailer.DoesNotExist:
+            return Response(
+                {"error": "This user is not associated with a retailer account"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        orders = Order.objects.filter(retailer=retailer)
+        custom_orders = CustomOrder.objects.filter(retailer=retailer)
+        order_count = orders.count() + custom_orders.count()
+
+        return Response({"order_count": order_count})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsRetailer])
+def getNumberOfCustomOrders(request):
+    # Retrieve the authenticated user
+    user = request.user
+
+    # Get the retailer associated with the user
+    try:
+        retailer = user.retailer
+    except retailer.DoesNotExist:
+        return Response(
+            {"error": "This user is not associated with a retailer account"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    # Retrieve the retailer's custom orders
+    custom_orders = CustomOrder.objects.filter(retailer=retailer)
+    custom_order_count = custom_orders.count()
+    return Response({"order_count": custom_order_count})
+
+

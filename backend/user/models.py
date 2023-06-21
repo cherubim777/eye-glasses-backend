@@ -51,10 +51,8 @@ class Retailer(models.Model):
         max_digits=7, decimal_places=2, null=True, blank=True, default=500
     )
     store_name = models.CharField(max_length=200)
-    # store_id = models.AutoField(primary_key=True, editable=False)
-    rating = models.DecimalField(
-        max_digits=7, decimal_places=2, null=True, blank=True, default=0
-    )
+
+    rating = models.DecimalField(max_digits=7, decimal_places=2, default=0)
     reset_password_code = models.CharField(max_length=100, null=True, blank=True)
 
     date_created = models.DateTimeField(auto_now_add=True)
