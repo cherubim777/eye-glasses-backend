@@ -154,7 +154,7 @@ def addReview(request, pk):
         product=product,
         customer=customer,
         retailer=product.retailer,
-        rating=request.data.get("rating"),
+        rating=rating,
         comment=request.data.get("comment"),
     )
 
