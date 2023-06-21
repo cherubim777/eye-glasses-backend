@@ -103,6 +103,7 @@ class Review(models.Model):
     retailer = models.ForeignKey(Retailer, on_delete=models.CASCADE)
     rating = models.IntegerField(default=0)
     comment = models.TextField()
+    createdAt = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.rating} given to product {self.product.name} by {self.customer.first_name}"

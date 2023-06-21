@@ -294,7 +294,6 @@ class GetCustomerProfile(generics.RetrieveAPIView):
 
 class GetCustomerProfileById(generics.RetrieveAPIView):
     serializer_class = CustomerSerializer
-    permission_classes = [IsAuthenticated, IsCustomer]
 
     def get_object(self):
         user_id = self.kwargs.get("id")
