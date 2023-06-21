@@ -74,29 +74,6 @@ class RetailerAccount(models.Model):
         return account
 
 
-# class AdminAccount(models.Model):
-#     _id = 1
-#     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-#     created_at = models.DateTimeField(auto_now_add=True, editable=False)
-
-#     def __str__(self):
-#         return "AdminAccount"
-
-#     def increase_balance(self, amount):
-#         self.balance += amount
-#         self.save()
-
-
-# class SingletonModelManager(models.Manager):
-#     def get_queryset(self):
-#         return super().get_queryset().first()
-
-
-# class SingletonModel(models.Model):
-#     objects = SingletonModelManager()
-
-#     class Meta:
-#         abstract = True
 
 
 class AdminAccount(models.Model):

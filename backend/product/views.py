@@ -177,14 +177,14 @@ class GetLatest(generics.ListAPIView):
     serializer_class = ProductSerializer
 
     def get_queryset(self):
-        return Product.objects.order_by("-createdAt")[:20]
+        return Product.objects.order_by("-createdAt")[:10]
 
 
 class GetPopular(generics.ListAPIView):
     serializer_class = ProductSerializer
 
     def get_queryset(self):
-        return Product.objects.order_by("-rating")
+        return Product.objects.order_by("-rating")[:10]
 
 
 class GetFeatured(GetLatest, GetPopular):

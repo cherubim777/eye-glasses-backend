@@ -273,28 +273,6 @@ class GetCustomerProfileById(generics.RetrieveAPIView):
         return customer
 
 
-# class GetCustomerProfile(generics.RetrieveAPIView):
-#     serializer_class = CustomerSerializer
-#     permission_classes = [IsAuthenticated, IsCustomer]
-
-#     def get_queryset(self):
-#         user = self.request.user
-#         queryset = Customer.objects.filter(user=user)
-#         return queryset
-
-
-# @api_view(["GET"])
-# @permission_classes([IsAuthenticated, IsRetailer])
-# def getRetailerProfile(request):
-#     user = request.user
-#     try:
-#         retailer = Retailer.objects.get(user=user)
-#     except Retailer.DoesNotExist:
-#         return Response(status=404)
-#     serializer = RetailerSerializer(retailer)
-#     return Response(serializer.data)
-
-
 class GetRetailerProfile(generics.RetrieveAPIView):
     serializer_class = RetailerSerializer
     permission_classes = [IsAuthenticated, IsRetailer]
@@ -324,20 +302,6 @@ class GetRetailerProfileById(generics.RetrieveAPIView):
             raise Http404
         self.check_object_permissions(self.request, retailer)
         return retailer
-
-
-# class GetCustomOrderRetailer(generics.RetrieveAPIView):
-#     serializer_class = RetailerSerializer
-#     # permission_classes = [IsAuthenticated, IsRetailer]
-
-#     def get_object(self):
-#         try:
-#             queryset = Retailer.objects.filter(accepts_custom_order=True)
-#             return queryset
-
-#         except Retailer.DoesNotExist:
-#             raise Http404
-#         return retailer
 
 
 class GetCustomOrderRetailer(generics.ListAPIView):
