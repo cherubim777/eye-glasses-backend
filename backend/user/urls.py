@@ -9,7 +9,7 @@ from django.urls import path, include
 urlpatterns = [
     path("login/", views.MyTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("logout/", views.Logout.as_view(), name="logout"),
-    path("customer/", views.customerRegister, name="customer"),
+    path("customer/", views.CustomerRegister.as_view(), name="customer"),
     path("retailer/", views.RetailerRegister.as_view(), name="retailer"),
     path("getAllCustomers/", views.getAllCustomers, name="getAllCustomers"),
     path("getAllRetailers/", views.getAllRetailers, name="getAllRetailers"),

@@ -87,8 +87,7 @@ class Logout(APIView):
         return Response({"message": "User logged out successfully"})
 
 
-@api_view(["POST"])
-class customerRegister(APIView):
+class CustomerRegister(APIView):
     def post(self, request):
         data = request.data
 

@@ -81,8 +81,13 @@ class Product(models.Model):
             return False
 
     def calculateRating(self, rating):
-        self.rating = (Decimal(self.rating) + Decimal(rating)) / (self.numReviews + 1)
-        self.numReviews += 1
+        if rating == None:
+            self.rating = self.rating
+        else:
+            self.rating = (Decimal(self.rating) + Decimal(rating)) / (
+                self.numReviews + 1
+            )
+            self.numReviews += 1
 
         self.retailer.updateRating(self.rating)
         self.save()
@@ -103,8 +108,8 @@ class Review(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True)
     retailer = models.ForeignKey(Retailer, on_delete=models.CASCADE)
-    rating = models.IntegerField(default=0)
-    comment = models.TextField()
+    rating = models.IntegerField(default=0, null=True, blank=True)
+    comment = models.TextField(null=True, blank=True)
     createdAt = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -147,19 +147,16 @@ def addReview(request, pk):
     customer = request.user.customer
 
     product = get_object_or_404(Product, id=pk)
-    rating = request.data.get("rating")
-    if rating == "null":
-        rating = None
     review = Review(
         product=product,
         customer=customer,
         retailer=product.retailer,
-        rating=rating,
+        rating=request.data.get("rating"),
         comment=request.data.get("comment"),
     )
 
     review.save()
-    product.calculateRating(rating)
+    product.calculateRating(request.data.get("rating"))
 
     serializer = ReviewSerializer(review)
     return Response(serializer.data)
