@@ -36,3 +36,4 @@ class OrderDataSerializer(serializers.Serializer):
     quantity = serializers.IntegerField()
     image = serializers.ImageField()
     product_name = serializers.CharField()
+    size = serializers.CharField()

@@ -70,7 +70,6 @@ class Product(models.Model):
         max_digits=7, decimal_places=2, null=True, blank=True, default=0
     )
     quantity = models.IntegerField(default=0)
-    size = models.CharField(max_length=20, default="46-20-145 B40-Medium")
     numReviews = models.IntegerField(default=0)
     price = models.DecimalField(max_digits=7, decimal_places=2)
     createdAt = models.DateTimeField(auto_now_add=True)
