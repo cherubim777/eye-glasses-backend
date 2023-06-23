@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     "order.apps.OrderConfig",
     "wishlist.apps.WishlistConfig",
     "payment.apps.PaymentConfig",
+    "notification.apps.NotificationConfig",
+    "report.apps.ReportConfig",
     "corsheaders",
 ]
 

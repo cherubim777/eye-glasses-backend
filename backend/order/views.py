@@ -19,6 +19,7 @@ from cart.models import Cart
 from payment.models import CustomerAccount, RetailerAccount, AdminAccount
 from product.serializers import *
 from rest_framework.views import APIView
+from notification.models import *
 
 
 @api_view(["POST"])
@@ -26,7 +27,6 @@ from rest_framework.views import APIView
 def placeOrder(request):
     # Retrieve the necessary data from the request
     product_id = request.data.get("product_id")
-    size = request.data.get("size")
     quantity = request.data.get("quantity")
     shipping_address = request.data.get("shipping_address")
     payment_method = request.data.get("payment_method")
@@ -110,7 +110,6 @@ def placeOrder(request):
     # Create a new order item
     OrderItem.objects.create(
         product=product,
-        size=size,
         order=order,
         name=product.name,
         qty=quantity,
@@ -136,7 +135,6 @@ def placeCustomOrder(request):
     # Retrieve the necessary data from the request
     shipping_address = request.data.get("shipping_address")
     frame = request.data.get("frame")
-    size = request.data.get("size")
     retailer_id = request.data.get("retailer")
     right_sphere = request.data.get("right_sphere")
     left_sphere = request.data.get("left_sphere")
@@ -225,7 +223,6 @@ def placeCustomOrder(request):
         totalPrice=total_price,
         delivery=delivery,
         frame=frame,
-        size=size,
     )
 
     # Create a new shipping address
@@ -364,7 +361,6 @@ class GetRetailerOrders(APIView):
             order_item = OrderItem.objects.get(order=order)
             quantity = order_item.qty
             product = order_item.product
-            size = order_item.size
             image = request.build_absolute_uri(product.photo.url)
             product_name = product.name
 
@@ -375,7 +371,6 @@ class GetRetailerOrders(APIView):
                 "quantity": quantity,
                 "photo": image,
                 "product_name": product_name,
-                "size": size,
             }
             serializer = OrderDataSerializer(data=order_data)
             if serializer.is_valid:
@@ -476,6 +471,11 @@ def markCustomOrderAsReady(request, custom_order_id):
     custom_order.readyAt = datetime.datetime.now()
     custom_order.save()
 
+    CustomerNotification.objects.create(
+        customer=custom_order.customer,
+        message=f" the custom order you have ordered from {retailer} at {custom_order.createdAt} is ready",
+    )
+
     # Serialize the custom order and return it in the response
     serializer = CustomOrderSerializer(custom_order)
     return Response(serializer.data)
@@ -491,12 +491,18 @@ def orderFulfilled(request, order_id):
             {"message": "Order not found"}, status=status.HTTP_404_NOT_FOUND
         )
     if not order.isDelivered:
+        order_item = OrderItem.objects.get(order=order)
         retailer_account = order.retailer.retaileraccount
         customer_account = order.customer.customeraccount
         customer_account.fulfill_order(order.totalPrice, retailer_account)
         order.isDelivered = True
         order.deliveredAt = datetime.datetime.now()
         order.save()
+
+        RetailerNotification.objects.create(
+            retailer=order.retailer,
+            message=f" the product {order_item.product.name} has been succesuly delivered to {order.customer.name} therefore the money is delivered to your account",
+        )
 
     return Response({"message": "money transferred to retailer account"})
 
@@ -513,6 +519,10 @@ def CustomOrderFulfilled(request, order_id):
             order.isDelivered = True
             order.deliveredAt = datetime.datetime.now()
             order.save()
+            RetailerNotification.objects.create(
+                retailer=order.retailer,
+                message=f" the custom order has been succesuly delivered to {order.customer.name} therefore the money is delivered to your account",
+            )
 
         return Response({"message": "money transferred to retailer account"})
     else:

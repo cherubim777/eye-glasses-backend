@@ -41,7 +41,6 @@ class OrderItem(models.Model):
     )
     order = models.ForeignKey(Order, null=True, blank=True, on_delete=models.SET_NULL)
     name = models.CharField(max_length=200, null=True, blank=True)
-    size = models.CharField(max_length=20, default="46-20-145 B40-Medium")
     qty = models.IntegerField(null=True, blank=True, default=0)
     price = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
 
@@ -95,7 +94,6 @@ class CustomOrder(models.Model):
         max_length=20, choices=DELIVERY_CHOICES, default="GO Delivery Ethiopia"
     )
     frame = models.ForeignKey(Product, null=True, blank=True, on_delete=models.SET_NULL)
-    size = models.CharField(max_length=20, default="46-20-145 B40-Medium")
 
     isPaid = models.BooleanField(default=True)
     paidAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
