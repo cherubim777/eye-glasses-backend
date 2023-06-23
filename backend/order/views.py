@@ -169,7 +169,7 @@ def placeCustomOrder(request):
         )
 
     try:
-        frame = Product.object.get(id=frame)
+        frame = Product.objects.get(id=frame)
     except frame.DoesNotExist:
         return Response(
             {"error": "This frame doesnot exist any more"},
@@ -227,7 +227,7 @@ def placeCustomOrder(request):
 
     # Create a new shipping address
     ShippingAddress.objects.create(
-        order=custom_order,
+        customOrder=custom_order,
         address=shipping_address.get("address"),
         city=shipping_address.get("city"),
         shippingPrice=shipping_price,

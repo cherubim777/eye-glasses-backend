@@ -2,9 +2,14 @@ from django.db import models
 
 from product.models import Product
 from user.models import Customer, Retailer
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericRelation
 
 
 # Create your models here.
+
+
 class Order(models.Model):
     DELIVERY_CHOICES = [
         ("GO Delivery Ethiopia", "GO Delivery Ethiopia"),
@@ -46,18 +51,6 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return str(self.name)
-
-
-class ShippingAddress(models.Model):
-    order = models.OneToOneField(Order, on_delete=models.CASCADE, null=True, blank=True)
-    address = models.CharField(max_length=200, null=True, blank=True)
-    city = models.CharField(max_length=200, null=True, blank=True)
-    shippingPrice = models.DecimalField(
-        max_digits=7, decimal_places=2, null=True, blank=True
-    )
-
-    def __str__(self):
-        return self.address
 
 
 class CustomOrder(models.Model):
@@ -105,3 +98,18 @@ class CustomOrder(models.Model):
 
     def __str__(self):
         return f"{self.createdAt.strftime('%Y-%m-%d %H:%M:%S')} - {self.customer.first_name} {self.customer.last_name} - {self.retailer.store_name}"
+
+
+class ShippingAddress(models.Model):
+    order = models.ForeignKey(Order, null=True, blank=True, on_delete=models.CASCADE)
+    customOrder = models.ForeignKey(
+        CustomOrder, null=True, blank=True, on_delete=models.CASCADE
+    )
+    address = models.CharField(max_length=200, null=True, blank=True)
+    city = models.CharField(max_length=200, null=True, blank=True)
+    shippingPrice = models.DecimalField(
+        max_digits=7, decimal_places=2, null=True, blank=True
+    )
+
+    def __str__(self):
+        return f"{self.address}, {self.city}"
