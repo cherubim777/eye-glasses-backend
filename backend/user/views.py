@@ -1,3 +1,4 @@
+from django.dispatch import receiver
 from django.shortcuts import get_object_or_404, render
 from django.http import Http404, JsonResponse
 from django.test import TransactionTestCase
@@ -27,7 +28,7 @@ from wishlist.serializers import *
 from rest_framework import generics
 from rest_framework import generics, status
 import random
-from .email import sendMail
+from .email import sendMail, send_activation_email
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from report.models import *
@@ -153,6 +154,7 @@ class RetailerRegister(APIView):
                     username=data["username"],
                     password=make_password(data["password"]),
                     email=data["email"],
+                    is_active=False,
                 )
 
                 retailer = Retailer.objects.create(
@@ -376,3 +378,9 @@ def confirm_reset(request):
             )
         else:
             return Response({"message": "Invalid reset password code"}, status=400)
+
+
+@receiver(post_save, sender=User)
+def send_activation_email_on_save(sender, instance, created, **kwargs):
+    if not created and instance.is_active:
+        send_activation_email(instance.email)
