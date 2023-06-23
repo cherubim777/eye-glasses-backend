@@ -23,6 +23,10 @@ class Category(models.Model):
     ]
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
 
+    class Meta:
+        verbose_name = "Category"
+        verbose_name_plural = "Categories"
+
 
 class Product(models.Model):
     CATEGORY_CHOICES = [
