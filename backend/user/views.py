@@ -31,9 +31,9 @@ import random
 from .email import sendMail, send_activation_email
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
-from report.models import *
+
 from notification.models import *
-from report.serializers import *
+
 from notification.serializers import *
 
 
@@ -172,17 +172,15 @@ class RetailerRegister(APIView):
                     custom_order_price=data.get("custom_order_price"),
                 )
 
-                salesReport = SalesReport.create(retailer=retailer)
                 account = RetailerAccount.create(retailer=retailer, initial_balance=0)
                 user_serializer = UserSerializer(user, many=False)
                 retailer_serializer = RetailerSerializer(retailer, many=False)
                 account_serializer = RetailerAccountSerializer(account, many=False)
-                sales_report_serializer = SalesReportSerializer(salesReport, many=False)
+
                 response_data = {
                     "user": user_serializer.data,
                     "retailer": retailer_serializer.data,
                     "account": account_serializer.data,
-                    "sales report": sales_report_serializer.data,
                 }
                 return Response(response_data)
         except:
