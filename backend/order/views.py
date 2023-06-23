@@ -19,6 +19,7 @@ from cart.models import Cart
 from payment.models import CustomerAccount, RetailerAccount, AdminAccount
 from product.serializers import *
 from rest_framework.views import APIView
+from notification.models import *
 
 
 @api_view(["POST"])
@@ -132,6 +133,8 @@ def placeOrder(request):
 @permission_classes([IsAuthenticated, IsCustomer])
 def placeCustomOrder(request):
     # Retrieve the necessary data from the request
+    shipping_address = request.data.get("shipping_address")
+    frame = request.data.get("frame")
     retailer_id = request.data.get("retailer")
     right_sphere = request.data.get("right_sphere")
     left_sphere = request.data.get("left_sphere")
@@ -166,6 +169,14 @@ def placeCustomOrder(request):
         )
 
     try:
+        frame = Product.objects.get(id=frame)
+    except frame.DoesNotExist:
+        return Response(
+            {"error": "This frame doesnot exist any more"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
         if retailer.accepts_custom_order != True:
             raise ValueError(
                 f"Retailer with id {retailer_id} does not accept custom orders"
@@ -176,7 +187,7 @@ def placeCustomOrder(request):
 
     # Calculate the total price of the custom order
     item_price = (
-        retailer.custom_order_price
+        retailer.custom_order_price + frame.price
     )  # assuming price per custom order is 500.00 birr
     shipping_price = Decimal("100.00")  # assuming flat shipping rate of 100.00 birr
     commission_rate = Decimal("0.02")  # assuming commission rate of 2%
@@ -211,6 +222,15 @@ def placeCustomOrder(request):
         commissionPrice=commission_price,
         totalPrice=total_price,
         delivery=delivery,
+        frame=frame,
+    )
+
+    # Create a new shipping address
+    ShippingAddress.objects.create(
+        customOrder=custom_order,
+        address=shipping_address.get("address"),
+        city=shipping_address.get("city"),
+        shippingPrice=shipping_price,
     )
 
     # Serialize the custom order and return it in the response
@@ -420,29 +440,6 @@ class GetCustomerOrders(APIView):
         return Response({"orders": order_dict})
 
 
-# @api_view(["GET"])
-# @permission_classes([IsAuthenticated, IsCustomer])
-# def getCustomerOrders(request):
-#     # Retrieve the authenticated user
-#     user = request.user
-
-#     # Get the customer associated with the user
-#     try:
-#         customer = user.customer
-#     except Customer.DoesNotExist:
-#         return Response(
-#             {"error": "This user is not associated with a customer account"},
-#             status=status.HTTP_400_BAD_REQUEST,
-#         )
-
-#     # Retrieve the customer's orders (that are not custom orders)
-#     orders = Order.objects.filter(customer=customer).order_by("-createdAt").reverse()
-
-#     # Serialize the orders and return them in the response
-#     serializer = OrderSerializer(orders, many=True, context={"request": request})
-#     return Response(serializer.data)
-
-
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated, IsRetailer])
 def markCustomOrderAsReady(request, custom_order_id):
@@ -474,6 +471,11 @@ def markCustomOrderAsReady(request, custom_order_id):
     custom_order.readyAt = datetime.datetime.now()
     custom_order.save()
 
+    CustomerNotification.objects.create(
+        customer=custom_order.customer,
+        message=f" the custom order you have ordered from {retailer} at {custom_order.createdAt} is ready",
+    )
+
     # Serialize the custom order and return it in the response
     serializer = CustomOrderSerializer(custom_order)
     return Response(serializer.data)
@@ -489,12 +491,18 @@ def orderFulfilled(request, order_id):
             {"message": "Order not found"}, status=status.HTTP_404_NOT_FOUND
         )
     if not order.isDelivered:
+        order_item = OrderItem.objects.get(order=order)
         retailer_account = order.retailer.retaileraccount
         customer_account = order.customer.customeraccount
         customer_account.fulfill_order(order.totalPrice, retailer_account)
         order.isDelivered = True
         order.deliveredAt = datetime.datetime.now()
         order.save()
+
+        RetailerNotification.objects.create(
+            retailer=order.retailer,
+            message=f" the product {order_item.product.name} has been succesuly delivered to {order.customer.name} therefore the money is delivered to your account",
+        )
 
     return Response({"message": "money transferred to retailer account"})
 
@@ -511,6 +519,10 @@ def CustomOrderFulfilled(request, order_id):
             order.isDelivered = True
             order.deliveredAt = datetime.datetime.now()
             order.save()
+            RetailerNotification.objects.create(
+                retailer=order.retailer,
+                message=f" the custom order has been succesuly delivered to {order.customer.name} therefore the money is delivered to your account",
+            )
 
         return Response({"message": "money transferred to retailer account"})
     else:
@@ -680,5 +692,3 @@ def getNumberOfCustomOrders(request):
     custom_orders = CustomOrder.objects.filter(retailer=retailer)
     custom_order_count = custom_orders.count()
     return Response({"order_count": custom_order_count})
-
-

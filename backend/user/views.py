@@ -1,3 +1,4 @@
+from django.dispatch import receiver
 from django.shortcuts import get_object_or_404, render
 from django.http import Http404, JsonResponse
 from django.test import TransactionTestCase
@@ -27,7 +28,13 @@ from wishlist.serializers import *
 from rest_framework import generics
 from rest_framework import generics, status
 import random
-from .email import sendMail
+from .email import sendMail, send_activation_email
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+
+from notification.models import *
+
+from notification.serializers import *
 
 
 class IsCustomer(BasePermission):
@@ -147,6 +154,7 @@ class RetailerRegister(APIView):
                     username=data["username"],
                     password=make_password(data["password"]),
                     email=data["email"],
+                    is_active=False,
                 )
 
                 retailer = Retailer.objects.create(
@@ -168,6 +176,7 @@ class RetailerRegister(APIView):
                 user_serializer = UserSerializer(user, many=False)
                 retailer_serializer = RetailerSerializer(retailer, many=False)
                 account_serializer = RetailerAccountSerializer(account, many=False)
+
                 response_data = {
                     "user": user_serializer.data,
                     "retailer": retailer_serializer.data,
@@ -273,28 +282,6 @@ class GetCustomerProfileById(generics.RetrieveAPIView):
         return customer
 
 
-# class GetCustomerProfile(generics.RetrieveAPIView):
-#     serializer_class = CustomerSerializer
-#     permission_classes = [IsAuthenticated, IsCustomer]
-
-#     def get_queryset(self):
-#         user = self.request.user
-#         queryset = Customer.objects.filter(user=user)
-#         return queryset
-
-
-# @api_view(["GET"])
-# @permission_classes([IsAuthenticated, IsRetailer])
-# def getRetailerProfile(request):
-#     user = request.user
-#     try:
-#         retailer = Retailer.objects.get(user=user)
-#     except Retailer.DoesNotExist:
-#         return Response(status=404)
-#     serializer = RetailerSerializer(retailer)
-#     return Response(serializer.data)
-
-
 class GetRetailerProfile(generics.RetrieveAPIView):
     serializer_class = RetailerSerializer
     permission_classes = [IsAuthenticated, IsRetailer]
@@ -324,20 +311,6 @@ class GetRetailerProfileById(generics.RetrieveAPIView):
             raise Http404
         self.check_object_permissions(self.request, retailer)
         return retailer
-
-
-# class GetCustomOrderRetailer(generics.RetrieveAPIView):
-#     serializer_class = RetailerSerializer
-#     # permission_classes = [IsAuthenticated, IsRetailer]
-
-#     def get_object(self):
-#         try:
-#             queryset = Retailer.objects.filter(accepts_custom_order=True)
-#             return queryset
-
-#         except Retailer.DoesNotExist:
-#             raise Http404
-#         return retailer
 
 
 class GetCustomOrderRetailer(generics.ListAPIView):
@@ -403,3 +376,9 @@ def confirm_reset(request):
             )
         else:
             return Response({"message": "Invalid reset password code"}, status=400)
+
+
+@receiver(post_save, sender=User)
+def send_activation_email_on_save(sender, instance, created, **kwargs):
+    if not created and instance.is_active:
+        send_activation_email(instance.email)
