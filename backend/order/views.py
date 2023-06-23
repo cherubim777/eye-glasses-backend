@@ -132,6 +132,8 @@ def placeOrder(request):
 @permission_classes([IsAuthenticated, IsCustomer])
 def placeCustomOrder(request):
     # Retrieve the necessary data from the request
+    shipping_address = request.data.get("shipping_address")
+    frame = request.data.get("frame")
     retailer_id = request.data.get("retailer")
     right_sphere = request.data.get("right_sphere")
     left_sphere = request.data.get("left_sphere")
@@ -176,7 +178,7 @@ def placeCustomOrder(request):
 
     # Calculate the total price of the custom order
     item_price = (
-        retailer.custom_order_price
+        retailer.custom_order_price + frame.price
     )  # assuming price per custom order is 500.00 birr
     shipping_price = Decimal("100.00")  # assuming flat shipping rate of 100.00 birr
     commission_rate = Decimal("0.02")  # assuming commission rate of 2%
@@ -211,6 +213,15 @@ def placeCustomOrder(request):
         commissionPrice=commission_price,
         totalPrice=total_price,
         delivery=delivery,
+        frame=frame,
+    )
+
+    # Create a new shipping address
+    ShippingAddress.objects.create(
+        order=custom_order,
+        address=shipping_address.get("address"),
+        city=shipping_address.get("city"),
+        shippingPrice=shipping_price,
     )
 
     # Serialize the custom order and return it in the response
@@ -418,29 +429,6 @@ class GetCustomerOrders(APIView):
                 errors = serializer.errors
 
         return Response({"orders": order_dict})
-
-
-# @api_view(["GET"])
-# @permission_classes([IsAuthenticated, IsCustomer])
-# def getCustomerOrders(request):
-#     # Retrieve the authenticated user
-#     user = request.user
-
-#     # Get the customer associated with the user
-#     try:
-#         customer = user.customer
-#     except Customer.DoesNotExist:
-#         return Response(
-#             {"error": "This user is not associated with a customer account"},
-#             status=status.HTTP_400_BAD_REQUEST,
-#         )
-
-#     # Retrieve the customer's orders (that are not custom orders)
-#     orders = Order.objects.filter(customer=customer).order_by("-createdAt").reverse()
-
-#     # Serialize the orders and return them in the response
-#     serializer = OrderSerializer(orders, many=True, context={"request": request})
-#     return Response(serializer.data)
 
 
 @api_view(["PUT"])
@@ -680,5 +668,3 @@ def getNumberOfCustomOrders(request):
     custom_orders = CustomOrder.objects.filter(retailer=retailer)
     custom_order_count = custom_orders.count()
     return Response({"order_count": custom_order_count})
-
-

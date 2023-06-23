@@ -93,6 +93,7 @@ class CustomOrder(models.Model):
     delivery = models.CharField(
         max_length=20, choices=DELIVERY_CHOICES, default="GO Delivery Ethiopia"
     )
+    frame = models.ForeignKey(Product, null=True, blank=True, on_delete=models.SET_NULL)
     isPaid = models.BooleanField(default=True)
     paidAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     isReady = models.BooleanField(default=False)
