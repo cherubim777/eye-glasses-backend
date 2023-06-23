@@ -145,13 +145,6 @@ class RetailerRegister(APIView):
         data = request.data
         try:
             with transaction.atomic():
-                photo_data = request.FILES.get("photo")  # retrieve uploaded photo file
-                photo_path = None
-                if photo_data:
-                    photo_path = default_storage.save(
-                        photo_data.name, ContentFile(photo_data.read())
-                    )  # save photo to server and get file path
-
                 user = User.objects.create(
                     username=data["username"],
                     password=make_password(data["password"]),
@@ -167,7 +160,7 @@ class RetailerRegister(APIView):
                     local_address=data["local_address"],
                     subcity=data["subcity"],
                     city=data["city"],
-                    photo=photo_path,
+                    photo=data.get("photo"),
                     store_name=data["store_name"],
                     accepts_custom_order=data["accepts_custom_order"],
                     custom_order_price=data.get("custom_order_price"),
