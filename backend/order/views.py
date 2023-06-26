@@ -723,17 +723,31 @@ class GetStatNumbers(APIView):
                 {"error": "This user is not associated with a retailer account"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
         men = 0
         women = 0
         kids = 0
-        orders = Order.objects.filter(retailer=retailer)
-        for order in orders:
-            order_item = OrderItem.objects.filter(order=order)
-            if order_item.product.gender_category == "m":
-                men += 1
-            elif order_item.product.gender_category == "f":
-                women += 1
-            if order_item.product.age_group == "k":
-                kids += 1
 
+        # Filter orders by retailer
+        orders = Order.objects.filter(retailer=retailer)
+
+        # Iterate over each order
+        for order in orders:
+            # Filter order items by order
+            order_items = OrderItem.objects.filter(order=order)
+
+            # Iterate over each order item
+            for order_item in order_items:
+                # Access the related Product object
+                product = order_item.product
+
+                # Increment the appropriate gender/age count
+                if product.gender_category == "m":
+                    men += 1
+                elif product.gender_category == "f":
+                    women += 1
+                if product.age_group == "k":
+                    kids += 1
+
+        # Return the counts in the response
         return Response({"men": men, "women": women, "kids": kids})

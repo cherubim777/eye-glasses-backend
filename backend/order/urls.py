@@ -38,5 +38,5 @@ urlpatterns = [
         name="markReady",
     ),
     path("numberOfOrders/", views.GetNumberOfOrders.as_view()),
-    path("getStatNumbers", views.GetStatNumbers.as_view(), name="getStatNumbers"),
+    path("getStatNumbers/", views.GetStatNumbers.as_view(), name="getStatNumbers"),
 ]
