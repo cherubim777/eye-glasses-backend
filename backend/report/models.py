@@ -5,7 +5,7 @@ from django.db import models
 from django.db.models import DecimalField
 from user.models import *
 import datetime
-from payment.models import transaction
+from payment.models import Transaction
 from django.db.models.functions import ExtractMonth
 from user.models import Retailer
 from django.db.models import Count
@@ -103,6 +103,11 @@ class SalesReport(models.Model):
     def __str__(self):
         return f"Sales report of {self.retailer.store_name}"
 
+    @staticmethod
+    def create(retailer):
+        sales_report = SalesReport.objects.create(retailer=retailer)
+        return sales_report
+
     def update(self, retailer):
         # Get the current year
         current_year = datetime.datetime.now().year
@@ -115,7 +120,7 @@ class SalesReport(models.Model):
 
         # Aggregate the transaction amounts by month for the current year and the last year
         current_year_monthly_sales = (
-            transaction.objects.filter(
+            Transaction.objects.filter(
                 retailer=retailer,
                 createdAt__gte=start_date_current_year,
                 createdAt__lte=end_date_current_year,
@@ -131,7 +136,7 @@ class SalesReport(models.Model):
         )
 
         last_year_monthly_sales = (
-            transaction.objects.filter(
+            Transaction.objects.filter(
                 retailer=retailer,
                 createdAt__gte=start_date_last_year,
                 createdAt__lte=end_date_last_year,
@@ -192,7 +197,7 @@ class SalesReport(models.Model):
         self.monthly_revenues = json.dumps(monthly_revenues)
 
         # Update the total sales, number_of_orders_completed, and total_number_of_transaction fields
-        self.total_sales = transaction.objects.filter(retailer=retailer).aggregate(
+        self.total_sales = Transaction.objects.filter(retailer=retailer).aggregate(
             total_sales=Coalesce(
                 Sum(
                     "amount",
@@ -203,11 +208,11 @@ class SalesReport(models.Model):
             )
         )["total_sales"]
 
-        self.number_of_orders_completed = transaction.objects.filter(
+        self.number_of_orders_completed = Transaction.objects.filter(
             retailer=retailer
         ).count()
 
-        self.total_number_of_transaction = transaction.objects.filter(
+        self.total_number_of_transaction = Transaction.objects.filter(
             retailer=retailer
         ).aggregate(total_transaction=Count("id"))["total_transaction"]
 

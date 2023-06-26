@@ -6,7 +6,7 @@ from user.models import Customer, Retailer
 from rest_framework.response import Response
 
 
-class transaction(models.Model):
+class Transaction(models.Model):
     retailer = models.ForeignKey(Retailer, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -17,7 +17,7 @@ class transaction(models.Model):
 
     @staticmethod
     def create(customer, retailer, amount):
-        account = transaction.objects.create(
+        account = Transaction.objects.create(
             customer=customer, retailer=retailer, amount=amount
         )
         return account
@@ -62,7 +62,7 @@ class CustomerAccount(models.Model):
         admin_account.increase_balance(amount * Decimal(0.02))
         self.save()
         retailer_account.save()
-        transaction.create(self.customer, retailer, amount - amount * Decimal(0.02))
+        Transaction.create(self.customer, retailer, amount - amount * Decimal(0.02))
 
     @staticmethod
     def create(customer, initial_balance):

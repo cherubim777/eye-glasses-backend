@@ -150,47 +150,47 @@ class CustomerRegister(APIView):
 class RetailerRegister(APIView):
     def post(self, request):
         data = request.data
-        try:
-            with transaction.atomic():
-                user = User.objects.create(
-                    username=data["username"],
-                    password=make_password(data["password"]),
-                    email=data["email"],
-                    is_active=False,
-                )
+        # try:
+        with transaction.atomic():
+            user = User.objects.create(
+                username=data["username"],
+                password=make_password(data["password"]),
+                email=data["email"],
+                is_active=False,
+            )
 
-                retailer = Retailer.objects.create(
-                    user=user,
-                    first_name=data["first_name"],
-                    last_name=data["last_name"],
-                    phone_number=data["phone_number"],
-                    email=data["email"],
-                    local_address=data["local_address"],
-                    subcity=data["subcity"],
-                    city=data["city"],
-                    photo=data.get("photo"),
-                    store_name=data["store_name"],
-                    accepts_custom_order=data["accepts_custom_order"],
-                    custom_order_price=data.get("custom_order_price"),
-                )
-                salesReport = salesReport.create(retailer=retailer)
-                account = RetailerAccount.create(retailer=retailer, initial_balance=0)
-                user_serializer = UserSerializer(user, many=False)
-                retailer_serializer = RetailerSerializer(retailer, many=False)
-                account_serializer = RetailerAccountSerializer(account, many=False)
-                sales_report_serializer = SalesReportSerializer(salesReport, many=True)
+            retailer = Retailer.objects.create(
+                user=user,
+                first_name=data["first_name"],
+                last_name=data["last_name"],
+                phone_number=data["phone_number"],
+                email=data["email"],
+                local_address=data["local_address"],
+                subcity=data["subcity"],
+                city=data["city"],
+                photo=data.get("photo"),
+                store_name=data["store_name"],
+                accepts_custom_order=data["accepts_custom_order"],
+                custom_order_price=data.get("custom_order_price"),
+            )
+            sales_report = SalesReport.create(retailer=retailer)
+            account = RetailerAccount.create(retailer=retailer, initial_balance=0)
+            user_serializer = UserSerializer(user, many=False)
+            retailer_serializer = RetailerSerializer(retailer, many=False)
+            account_serializer = RetailerAccountSerializer(account, many=False)
+            sales_report_serializer = SalesReportSerializer(sales_report, many=False)
 
-                account_serializer = RetailerAccountSerializer(account, many=False)
-                response_data = {
-                    "user": user_serializer.data,
-                    "retailer": retailer_serializer.data,
-                    "account": account_serializer.data,
-                    "salesReport": sales_report_serializer,
-                }
-                return Response(response_data)
-        except:
-            message = {"detail": "retailer with this username already exists"}
-            return Response(message, status=status.HTTP_400_BAD_REQUEST)
+            account_serializer = RetailerAccountSerializer(account, many=False)
+            response_data = {
+                "user": user_serializer.data,
+                "retailer": retailer_serializer.data,
+                "account": account_serializer.data,
+                "salesReport": sales_report_serializer.data,
+            }
+            return Response(response_data)
+        # except:
+        #     message = {"detail": "retailer with this username already exists"}
+        #     return Response(message, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["PUT"])

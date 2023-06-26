@@ -22,7 +22,6 @@ from payment.models import CustomerAccount, RetailerAccount, AdminAccount
 from product.serializers import *
 from rest_framework.views import APIView
 from notification.models import *
-from payment.models import transaction
 
 
 @api_view(["POST"])
