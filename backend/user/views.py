@@ -25,6 +25,8 @@ from cart.models import *
 from cart.serializers import *
 from wishlist.models import *
 from wishlist.serializers import *
+from analytics.models import *
+from analytics.serializers import *
 from rest_framework import generics
 from rest_framework import generics, status
 import random
@@ -131,7 +133,8 @@ class CustomerRegister(APIView):
                 wishlist = WishList.create(customer=customer)
                 user_serializer = UserSerializer(user, many=False)
                 customer_serializer = CustomerSerializer(customer, many=False)
-                account_serializer = CustomerAccountSerializer(account, many=False)
+                account_serializer = CustomerAccountSerializer(
+                    account, many=False)
                 cart_serializer = CartSerializer(cart, many=False)
                 wishlist_serializer = WishListSerializer(wishlist, many=False)
                 response_data = {
@@ -173,18 +176,36 @@ class RetailerRegister(APIView):
                     accepts_custom_order=data["accepts_custom_order"],
                     custom_order_price=data.get("custom_order_price"),
                 )
+<<<<<<< HEAD
                 salesReport = salesReport.create(retailer=retailer)
                 account = RetailerAccount.create(retailer=retailer, initial_balance=0)
                 user_serializer = UserSerializer(user, many=False)
                 retailer_serializer = RetailerSerializer(retailer, many=False)
                 account_serializer = RetailerAccountSerializer(account, many=False)
                 sales_report_serializer = SalesReportSerializer(salesReport, many=True)
+=======
 
+                account = RetailerAccount.create(
+                    retailer=retailer, initial_balance=0)
+                user_serializer = UserSerializer(user, many=False)
+                retailer_serializer = RetailerSerializer(retailer, many=False)
+                account_serializer = RetailerAccountSerializer(
+                    account, many=False)
+>>>>>>> ceeda345af3b9aaa65680d587c054a6ec7669acd
+
+                account_serializer = RetailerAccountSerializer(
+                    account, many=False)
+                analytics = Analaytics.create(retailer=retailer)
+                analytics_serializer = AnalyticsSerializer(analytics)
                 response_data = {
                     "user": user_serializer.data,
                     "retailer": retailer_serializer.data,
                     "account": account_serializer.data,
+<<<<<<< HEAD
                     "salesReport": sales_report_serializer,
+=======
+                    "analytics": analytics_serializer.data,
+>>>>>>> ceeda345af3b9aaa65680d587c054a6ec7669acd
                 }
                 return Response(response_data)
         except:

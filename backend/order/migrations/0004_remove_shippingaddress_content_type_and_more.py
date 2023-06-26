@@ -5,28 +5,37 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('order', '0003_initial'),
+        ("order", "0003_initial"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='shippingaddress',
-            name='content_type',
+            model_name="shippingaddress",
+            name="content_type",
         ),
         migrations.RemoveField(
-            model_name='shippingaddress',
-            name='object_id',
+            model_name="shippingaddress",
+            name="object_id",
         ),
         migrations.AddField(
-            model_name='shippingaddress',
-            name='customOrder',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='order.customorder'),
+            model_name="shippingaddress",
+            name="customOrder",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="order.customorder",
+            ),
         ),
         migrations.AddField(
-            model_name='shippingaddress',
-            name='order',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='order.order'),
+            model_name="shippingaddress",
+            name="order",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="order.order",
+            ),
         ),
     ]

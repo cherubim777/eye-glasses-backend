@@ -137,6 +137,21 @@ DATABASES = {
     }
 }
 
+"""
+this is for the postgresql databse config
+"""
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'visiondb',
+#         'USER': 'kirubel',
+#         'PASSWORD': '@leburik#',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
+# }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
