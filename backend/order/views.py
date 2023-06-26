@@ -706,3 +706,34 @@ def getNumberOfCustomOrders(request):
     custom_orders = CustomOrder.objects.filter(retailer=retailer)
     custom_order_count = custom_orders.count()
     return Response({"order_count": custom_order_count})
+
+
+class GetStatNumbers(APIView):
+    permission_classes = [IsAuthenticated, IsRetailer]
+
+    def get(self, request, format=None):
+        # Retrieve the authenticated user
+        user = request.user
+
+        # Get the retailer associated with the user
+        try:
+            retailer = user.retailer
+        except Retailer.DoesNotExist:
+            return Response(
+                {"error": "This user is not associated with a retailer account"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        men = 0
+        women = 0
+        kids = 0
+        orders = Order.objects.filter(retailer=retailer)
+        for order in orders:
+            order_item = OrderItem.objects.filter(order=order)
+            if order_item.product.gender_category == "m":
+                men += 1
+            elif order_item.product.gender_category == "f":
+                women += 1
+            if order_item.product.age_group == "k":
+                kids += 1
+
+        return Response({"men": men, "women": women, "kids": kids})
