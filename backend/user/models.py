@@ -53,6 +53,9 @@ class Retailer(models.Model):
     store_name = models.CharField(max_length=200)
 
     rating = models.DecimalField(max_digits=7, decimal_places=2, default=0)
+    twitter = models.CharField(max_length=200, blank=True, null=True)
+    facebook = models.CharField(max_length=200, blank=True, null=True)
+    instagram = models.CharField(max_length=200, blank=True, null=True)
     reset_password_code = models.CharField(max_length=100, null=True, blank=True)
 
     date_created = models.DateTimeField(auto_now_add=True)
