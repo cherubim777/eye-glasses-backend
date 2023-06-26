@@ -39,4 +39,5 @@ urlpatterns = [
     ),
     path("numberOfOrders/", views.GetNumberOfOrders.as_view()),
     path("getStatNumbers/", views.GetStatNumbers.as_view(), name="getStatNumbers"),
+    path("getTopProducts/", views.TopProducts.as_view(), name="getTopProducts"),
 ]
