@@ -16,6 +16,7 @@ from rest_framework.decorators import permission_classes
 from user.views import IsCustomer
 from user.views import IsRetailer
 from rest_framework import viewsets
+from report.models import SalesReport
 
 
 class GetProducts(generics.ListAPIView):
@@ -59,7 +60,10 @@ class AddProduct(APIView):
                     {"error": "Only retailers can add products"},
                     status=status.HTTP_403_FORBIDDEN,
                 )
+
             serializer.save(retailer=retailer)
+            sales_report = SalesReport.objects.get(retailer=retailer)
+            sales_report.update_no_of_products()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

@@ -31,6 +31,7 @@ urlpatterns = [
     path("order/", include("order.urls")),
     path("wishlist/", include("wishlist.urls")),
     path("payment/", include("payment.urls")),
+    path("report/", include("report.urls")),
     path("jet/", include(("jet.urls", "jet"))),
     path(
         "jet/dashboard/",

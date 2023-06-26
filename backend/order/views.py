@@ -9,6 +9,8 @@ from rest_framework.decorators import api_view
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
+
+from report.models import SalesReport
 from .models import *
 from .serializers import *
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
@@ -20,6 +22,7 @@ from payment.models import CustomerAccount, RetailerAccount, AdminAccount
 from product.serializers import *
 from rest_framework.views import APIView
 from notification.models import *
+from payment.models import transaction
 
 
 @api_view(["POST"])
@@ -75,7 +78,8 @@ def placeOrder(request):
             {"error": "Insufficient product quantity"},
             status=status.HTTP_400_BAD_REQUEST,
         )
-
+    sales_report = SalesReport.objects.get(retailer=retailer)
+    sales_report.update_no_of_products()
     # Calculate the total price of the order
     item_price = product.price
     shipping_price = Decimal("100.00")
@@ -494,14 +498,19 @@ def orderFulfilled(request, order_id):
         order_item = OrderItem.objects.get(order=order)
         retailer_account = order.retailer.retaileraccount
         customer_account = order.customer.customeraccount
-        customer_account.fulfill_order(order.totalPrice, retailer_account)
+        amount = order.totalPrice
+        customer_account.fulfill_order(
+            order.totalPrice, order.retailer, retailer_account
+        )
         order.isDelivered = True
         order.deliveredAt = datetime.datetime.now()
         order.save()
+        sales_report = SalesReport.objects.get(retailer=order.retailer)
+        sales_report.update(order.retailer)
 
         RetailerNotification.objects.create(
             retailer=order.retailer,
-            message=f" the product {order_item.product.name} has been succesuly delivered to {order.customer.name} therefore the money is delivered to your account",
+            message=f" the product {order_item.product.name} has been succesuly delivered to {order.customer.first_name} {order.customer.last_name} therefore the money is delivered to your account",
         )
 
     return Response({"message": "money transferred to retailer account"})
@@ -515,13 +524,17 @@ def CustomOrderFulfilled(request, order_id):
         if not order.isDelivered:
             retailer_account = order.retailer.retaileraccount
             customer_account = order.customer.customeraccount
-            customer_account.fulfill_order(order.totalPrice, retailer_account)
+            customer_account.fulfill_order(
+                order.totalPrice, order.retailer, retailer_account
+            )
             order.isDelivered = True
             order.deliveredAt = datetime.datetime.now()
             order.save()
+            sales_report = SalesReport.objects.get(retailer=order.retailer)
+            sales_report.update(order.retailer)
             RetailerNotification.objects.create(
                 retailer=order.retailer,
-                message=f" the custom order has been succesuly delivered to {order.customer.name} therefore the money is delivered to your account",
+                message=f" the custom order has been succesuly delivered to {order.customer.first_name} {order.customer.last_name} therefore the money is delivered to your account",
             )
 
         return Response({"message": "money transferred to retailer account"})
@@ -592,6 +605,8 @@ def placeCartOrder(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        sales_report = SalesReport.objects.get(retailer=retailer)
+        sales_report.update_no_of_products()
         # Calculate the total price for the order item
         item_price = product.price
         commission_amount = commission_rate * item_price * Decimal(cart_item.quantity)

@@ -31,7 +31,6 @@ class Order(models.Model):
     totalPrice = models.DecimalField(max_digits=7, decimal_places=2)
 
     isPaid = models.BooleanField(default=True)
-    paidAt = models.DateTimeField(auto_now_add=False, null=True, blank=True)
     isDelivered = models.BooleanField(default=False)
     deliveredAt = models.DateTimeField(auto_now_add=False, null=True, blank=True)
     createdAt = models.DateTimeField(auto_now_add=True)
@@ -89,7 +88,6 @@ class CustomOrder(models.Model):
     frame = models.ForeignKey(Product, null=True, blank=True, on_delete=models.SET_NULL)
 
     isPaid = models.BooleanField(default=True)
-    paidAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     isReady = models.BooleanField(default=False)
     readyAt = models.DateTimeField(auto_now_add=False, null=True, blank=True)
     isDelivered = models.BooleanField(default=False)

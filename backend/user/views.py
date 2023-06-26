@@ -35,6 +35,8 @@ from django.core.files.base import ContentFile
 from notification.models import *
 
 from notification.serializers import *
+from report.models import *
+from report.serializers import *
 
 
 class IsCustomer(BasePermission):
@@ -171,16 +173,18 @@ class RetailerRegister(APIView):
                     accepts_custom_order=data["accepts_custom_order"],
                     custom_order_price=data.get("custom_order_price"),
                 )
-
+                salesReport = salesReport.create(retailer=retailer)
                 account = RetailerAccount.create(retailer=retailer, initial_balance=0)
                 user_serializer = UserSerializer(user, many=False)
                 retailer_serializer = RetailerSerializer(retailer, many=False)
                 account_serializer = RetailerAccountSerializer(account, many=False)
+                sales_report_serializer = SalesReportSerializer(salesReport, many=True)
 
                 response_data = {
                     "user": user_serializer.data,
                     "retailer": retailer_serializer.data,
                     "account": account_serializer.data,
+                    "salesReport": sales_report_serializer,
                 }
                 return Response(response_data)
         except:
