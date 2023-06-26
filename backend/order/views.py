@@ -727,10 +727,12 @@ class GetStatNumbers(APIView):
         men = 0
         women = 0
         kids = 0
-
+        men_percent = 0
+        women_percent = 0
+        kids_percent = 0
         # Filter orders by retailer
         orders = Order.objects.filter(retailer=retailer)
-
+        order_count = orders.count()
         # Iterate over each order
         for order in orders:
             # Filter order items by order
@@ -742,12 +744,20 @@ class GetStatNumbers(APIView):
                 product = order_item.product
 
                 # Increment the appropriate gender/age count
-                if product.gender_category == "m":
+                if product.gender_category == "M":
                     men += 1
-                elif product.gender_category == "f":
+
+                elif product.gender_category == "F":
                     women += 1
-                if product.age_group == "k":
+
+                if product.age_group == "K":
                     kids += 1
 
+        men_percent = ((men) / order_count) * 100
+        women_percent = ((women) / order_count) * 100
+        kids_percent = ((kids) / order_count) * 100
+
         # Return the counts in the response
-        return Response({"men": men, "women": women, "kids": kids})
+        return Response(
+            {"men": men_percent, "women": women_percent, "kids": kids_percent}
+        )
