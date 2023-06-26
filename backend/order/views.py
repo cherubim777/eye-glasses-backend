@@ -764,15 +764,15 @@ class GetStatNumbers(APIView):
 
 
 class TopProducts(APIView):
-    # permission_classes = [IsAuthenticated, IsRetailer]
+    permission_classes = [IsAuthenticated, IsRetailer]
 
-    def get(self, request, pk, format=None):
+    def get(self, request, format=None):
         # Retrieve the authenticated user
-        # user = request.user
+        user = request.user
 
         # Get the retailer associated with the user
         try:
-            retailer = Retailer.objects.get(id=pk)
+            retailer = user.retailer
         except Retailer.DoesNotExist:
             return Response(
                 {"error": "This user is not associated with a retailer account"},
