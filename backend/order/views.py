@@ -779,8 +779,8 @@ class TopProducts(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Initialize a dictionary to store the top products and their details
-        top_products = {}
+        # Initialize a list to store the top products and their details
+        top_products = []
 
         # Retrieve the order items for the retailer, ordered by quantity
         order_items = OrderItem.objects.filter(order__retailer=retailer).order_by(
@@ -791,12 +791,67 @@ class TopProducts(APIView):
         for order_item in order_items:
             product = order_item.product
 
-            # If the product has not been added to the top products dictionary yet, add it with its details
-            if product.name not in top_products:
-                top_products[product.name] = {
-                    "photo": product.photo,
-                    "quantity": order_item.quantity,
-                }
+            # If the product has not been added to the top products list yet, add it with its details
+            if not any(p["name"] == product.name for p in top_products):
+                top_products.append(
+                    {
+                        "name": product.name,
+                        "price": product.price,
+                        "sales": order_item.qty * product.price,
+                        "photo": request.build_absolute_uri(product.photo.url),
+                        "quantity": product.quantity,
+                    }
+                )
+            else:
+                # If the product has already been added to the top products list, update its sales
+                for p in top_products:
+                    if p["name"] == product.name:
+                        p["sales"] += order_item.qty * product.price
 
-        # Return the top products
-        return Response(top_products)
+        # Sort the top products by sales in descending order
+        top_products.sort(key=lambda p: p["sales"], reverse=True)
+
+        # Return the top 5 products
+        return Response(top_products[:5])
+
+
+# class TopProducts(APIView):
+#     permission_classes = [IsAuthenticated, IsRetailer]
+
+#     def get(self, request, format=None):
+#         # Retrieve the authenticated user
+#         user = request.user
+
+#         # Get the retailer associated with the user
+#         try:
+#             retailer = user.retailer
+#         except Retailer.DoesNotExist:
+#             return Response(
+#                 {"error": "This user is not associated with a retailer account"},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+
+#         # Initialize a dictionary to store the top products and their details
+#         top_products = {}
+
+#         # Retrieve the order items for the retailer, ordered by quantity
+#         order_items = OrderItem.objects.filter(order__retailer=retailer).order_by(
+#             "-qty"
+#         )
+
+#         # Iterate over the order items
+#         for order_item in order_items:
+#             product = order_item.product
+
+#             # If the product has not been added to the top products dictionary yet, add it with its details
+#             if product.name not in top_products:
+#                 top_products[product.name] = {
+#                     "price": product.price,
+#                     "sales": order_item.qty * product.price,
+#                     "photo": request.build_absolute_uri(product.photo.url),
+#                     "quantity": product.quantity,
+#                 }
+#             else
+
+#         # Return the top products
+#         return Response(top_products)
